@@ -8,6 +8,7 @@ import { Message } from './types/models/message';
 interface State {
   activityId?: number;
   serviceSolicitation?: string;
+  customer_number?: number;
 }
 
 const initialState = {
@@ -24,16 +25,16 @@ export class Store extends ComponentStore<State> {
     private readonly ofs: OfsMessageService
   ) {
     super(initialState);
-    // this.loadGlobalProps();
   }
 
   // Selectors
   readonly vm$ = this.select((state) => state);
 
   readonly ofsProperties = this.select(
-    ({ activityId, serviceSolicitation }) => ({
+    ({ activityId, serviceSolicitation, customer_number }) => ({
       activityId,
       serviceSolicitation,
+      customer_number,
     })
   );
 
@@ -43,20 +44,14 @@ export class Store extends ComponentStore<State> {
       ...state,
       activityId: message.activity.aid,
       serviceSolicitation: message.activity.appt_number,
+      customer_number: message.activity.customer_number,
     };
   });
-  readonly setOfsProperties = this.updater(
-    (state, { activityId, serviceSolicitation }: any) => ({
-      ...state,
-      activityId,
-      serviceSolicitation,
-    })
-  );
+
   readonly loadGlobalProps = this.effect(($) =>
-    $.pipe(
-      concatMap(() => this.ofsProperties),
-      tap((props) => this.setOfsProperties(props)),
-      tap((props) => console.log(props))
-    )
+    $.pipe(concatMap(() => this.ofsProperties))
   );
+
+  // Effects
+  readonly close = this.effect(($) => $.pipe(tap((_) => this.ofs.close())));
 }

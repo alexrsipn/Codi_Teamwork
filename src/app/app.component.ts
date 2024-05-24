@@ -1,17 +1,19 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { OfsMessageService } from './services/ofs-message.service';
 import { Store } from './plugin.store';
+import { SpinnerComponent } from './shared/spinner/spinner.component';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
+  template: `
+    <router-outlet></router-outlet>
+    <app-spinner></app-spinner>
+  `,
   standalone: true,
-  imports: [RouterOutlet],
-  styleUrl: './app.component.scss',
+  imports: [RouterModule, SpinnerComponent],
 })
 export class AppComponent {
-  title = 'Plugin OFSC Sky';
   constructor(
     private readonly ofs: OfsMessageService,
     private readonly store: Store

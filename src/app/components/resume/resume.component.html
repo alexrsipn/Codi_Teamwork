@@ -1,0 +1,11 @@
+<header>
+  <h1>Plugin SKY OFSC</h1>
+</header>
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="content">
+    <p>Cuenta: {{ vm.customer_number }}</p>
+  </div>
+</ng-container>
+<footer>
+  <button mat-flat-button color="primary" (click)="close()">Regresar</button>
+</footer>

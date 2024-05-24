@@ -1,0 +1,17 @@
+<header>
+  <h1>Plugin SKY OFSC</h1>
+</header>
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="content">
+    <p>SS: {{ vm.serviceSolicitation }}</p>
+    <p>ActivityID: {{ vm.activityId }}</p>
+    <div class="center">
+      <button mat-raised-button color="accent" (click)="Initial()">
+        Acción
+      </button>
+    </div>
+  </div>
+</ng-container>
+<footer>
+  <button mat-flat-button color="primary" (click)="close()">Regresar</button>
+</footer>

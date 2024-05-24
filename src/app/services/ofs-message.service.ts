@@ -47,7 +47,7 @@ export class OfsMessageService {
               this.showError(data.errors);
               break;
             default:
-              alert('Unknown method');
+              // alert('Unknown method');
               break;
           }
         } else {
@@ -99,6 +99,7 @@ export class OfsMessageService {
   pluginOpen(message: any) {
     this.messageSubject.next(message);
     this.messageSubject.complete();
+    console.log(message);
   }
 
   close() {
@@ -114,7 +115,7 @@ export class OfsMessageService {
     let messageData = {
       apiVersion: 1,
       method: 'close',
-      activity: { aid: activityId },
+      activity: { external_id: resourceId },
     };
 
     this.sendPostMessageData(messageData);
