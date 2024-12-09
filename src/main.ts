@@ -5,11 +5,7 @@ import { AppComponent } from './app/app.component';
 import { provideRouter } from '@angular/router';
 import { ROUTES } from './app/route';
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
-import {
-  HttpClientModule,
-  provideHttpClient,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { loadingInterceptor } from './app/interceptor/loading.interceptor';
 import {
   FastXmlParserService,
