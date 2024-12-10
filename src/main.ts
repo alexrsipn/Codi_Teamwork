@@ -13,7 +13,6 @@ import {
 } from './app/services/xml-parser-service.service';
 import { AppConfig } from './app/services/app-config.service';
 import { APP_INITIALIZER, importProvidersFrom } from '@angular/core';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -28,10 +27,6 @@ bootstrapApplication(AppComponent, {
       multi: true,
       useFactory: (conf: AppConfig) => () => conf.load(),
     },
-    importProvidersFrom([
-      BrowserAnimationsModule,
-      MatDialogModule,
-      HttpClientModule,
-    ]),
+    importProvidersFrom([BrowserAnimationsModule, MatDialogModule]),
   ],
 });
