@@ -34,7 +34,7 @@ export class ResumeStore extends ComponentStore<ResumeState> {
     $.pipe(
       concatMap((_) => this.globalStore.ofsProperties),
       tap((props) => this.setOfsProperties(props)),
-      tap((props) => console.log(props))
+      // tap((props) => console.log(props))
     )
   );
 

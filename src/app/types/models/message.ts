@@ -1,6 +1,7 @@
 export interface Message {
+  method: | 'init' | 'open' | 'error' | 'wakeup' | 'callProcedureResult' | 'updateResult' | 'ready' | 'initEnd' | 'close' | 'sleep' | 'callProcedure' | 'update';
   apiVersion: number;
-  method: string;
+  // method: string;
   entity: string;
   user: User;
   resource: Resource;
@@ -13,6 +14,8 @@ export interface Message {
   securedData: SecuredData;
   openParams: any;
   allowedProcedures: AllowedProcedures;
+  sendMessageAsJsObject?: boolean;
+  sendInitData?: boolean;
 }
 
 export interface Format {
@@ -46,9 +49,9 @@ export interface Resource {
   timeZoneDiffSeconds: number;
 }
 
-export interface TeamMembers {}
+export interface TeamMembers { }
 
-export interface AssistingTo {}
+export interface AssistingTo { }
 
 export interface Team {
   teamMembers: TeamMembers;
@@ -62,7 +65,11 @@ export interface Queue {
   isActual: boolean;
 }
 
-export interface SecuredData {}
+export interface SecuredData {
+  ofscRestClientId: string;
+  ofscRestSecretId: string;
+  urlOFSC: string;
+}
 
 export interface AllowedProcedures {
   openLink: boolean;

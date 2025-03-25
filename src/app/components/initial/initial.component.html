@@ -1,17 +1,33 @@
-<header>
+<!-- <header>
   <h1>Plugin SKY OFSC</h1>
-</header>
+</header> -->
 <ng-container *ngIf="vm$ | async as vm">
   <div class="content">
-    <p>SS: {{ vm.serviceSolicitation }}</p>
-    <p>ActivityID: {{ vm.activityId }}</p>
+    <p>Activity ID: {{ vm.activityId }}</p>
     <div class="center">
       <button mat-raised-button color="accent" (click)="Initial()">
-        Acción
+        Ejecutar
       </button>
     </div>
+    <div style="display: flex; justify-content: center; align-items: center; width: 100%; border: 2px solid black">
+      <!-- <button *ngIf="vm.clientSignature" mat-raised-button color="accent" (click)="createImageFromBlob(vm.clientSignature!)">
+        Crear
+      </button> -->
+      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 50%">      
+        <img *ngIf="vm.clientSignature" alt="Client Signature" [src]="createImageFromBlob(vm.clientSignature)" />
+        <span>Firma del cliente</span>
+      </div>
+      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 50%">
+        <img *ngIf="vm.technitianSignature" alt="Client Signature" [src]="createImageFromBlob(vm.technitianSignature)" />
+        <span>Firma del técnico</span>
+      </div>
+    </div>
+    <!-- <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+      <img *ngIf="vm.technitianSignatureHandled" alt="Technician Signature Handled" [src]="createImageBase(vm.technitianSignatureHandled)" />
+      <img *ngIf="vm.clientSignatureHandled" alt="Client Signature Handled" [src]="createImageBase(vm.clientSignatureHandled)" />
+    </div> -->
   </div>
 </ng-container>
-<footer>
+<!-- <footer>
   <button mat-flat-button color="primary" (click)="close()">Regresar</button>
-</footer>
+</footer> -->

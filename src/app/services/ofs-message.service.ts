@@ -1,13 +1,16 @@
 import { Injectable, isDevMode } from '@angular/core';
-import { fromEvent, Observable, Subject } from 'rxjs';
+import { filter, fromEvent, map, Observable, share, Subject, tap } from 'rxjs';
 import { Message } from '../types/models/message';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OfsMessageService {
-  message: any;
+  private static API_VERSION = 1;
+
+  message: Message | any;
   messageSubject = new Subject<Message>();
+
   constructor() {
     fromEvent(window, 'message').subscribe((event: any) => {
       this.getPostMessageData(event);
@@ -15,6 +18,87 @@ export class OfsMessageService {
     this.sendOKMessage();
   }
 
+  // Input Messages
+  private message$ = fromEvent(window, 'message').pipe(
+    tap((e) => this.logEvent(e as MessageEvent)),
+    filter((e) => (e as MessageEvent).data),
+    map((e) => (e as MessageEvent<Message>).data),
+    share()
+  );
+
+  readonly initMessage$ = this.message$.pipe(
+    filter((m) => m.method === 'init')
+  );
+  readonly openMessage$ = this.message$.pipe(
+    filter((m) => m.method === 'open')
+  );
+  readonly wakeupMessage$ = this.message$.pipe(
+    filter((m) => m.method === 'wakeup')
+  );
+  readonly updateResultMessage$ = this.message$.pipe(
+    filter((m) => m.method === 'updateResult')
+  );
+  readonly errorMessage$ = this.message$.pipe(
+    filter((m) => m.method === 'error')
+  );
+
+  // Output Messages
+  ready(sendInitData: boolean = false): void {
+    const message: Partial<Message> = {
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'ready',
+      sendMessageAsJsObject: true,
+      sendInitData,
+    };
+    this.sendPostMessageData(message);
+  }
+
+  initEnd(additionalData: Partial<Message> = {}): void {
+    const message: Partial<Message> = {
+      ...additionalData,
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'initEnd'
+    };
+    this.sendPostMessageData(message);
+  }
+
+  close(additionalData: Partial<Message> = {}): void {
+    const message: Partial<Message> = {
+      ...additionalData,
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'update'
+    };
+    this.sendPostMessageData(message);
+  }
+
+  update(additionalData: Partial<Message> = {}): void {
+    const message: Partial<Message> = {
+      ...additionalData,
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'update',
+    };
+    this.sendPostMessageData(message);
+  }
+
+  closeAndUpdate(signatureValid: boolean) {
+    const message: Partial<Message> = {
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'close',
+      activity: { XA_SIGN_VALID: signatureValid }
+    };
+    this.sendPostMessageData(message);
+  }
+
+  sleep(additionalData: Partial<Message> = {}): void {
+    const message: Partial<Message> = {
+      ...additionalData,
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'sleep'
+    };
+    this.sendPostMessageData(message);
+  }
+
+  // Aux methods
   getMessage(): Observable<Message> {
     return this.messageSubject.asObservable();
   }
@@ -27,11 +111,11 @@ export class OfsMessageService {
         if (data.method) {
           this.log(
             window.location.host +
-              ' <- ' +
-              ' ' +
-              this.getDomain(event.origin) +
-              '\nMethod: ' +
-              data.method,
+            ' <- ' +
+            ' ' +
+            this.getDomain(event.origin) +
+            '\nMethod: ' +
+            data.method,
             JSON.stringify(data, null, 4)
           );
 
@@ -53,23 +137,24 @@ export class OfsMessageService {
         } else {
           this.log(
             window.location.host +
-              ' <- NO METHOD' +
-              this.getDomain(event.origin),
+            ' <- NO METHOD' +
+            this.getDomain(event.origin),
             JSON.stringify(data),
-            true,
-            '#d62d20'
+            '#d62d20',
+            true
           );
         }
       } else {
         this.log(
           window.location.host + ' <- NOT JSON ' + this.getDomain(event.origin),
+          null,
+          null,
           true
         );
       }
     } else {
       this.log(
-        window.location.host + ' <- NO DATA ' + this.getDomain(event.origin),
-        true
+        window.location.host + ' <- NO DATA ' + this.getDomain(event.origin), null, null, true
       );
     }
   }
@@ -78,14 +163,14 @@ export class OfsMessageService {
     if (document.referrer !== '') {
       this.log(
         window.location.host +
-          ' -> ' +
-          this.getDomain(document.referrer) +
-          '\nMethod: ' +
-          data.method +
-          ' ',
+        ' -> ' +
+        this.getDomain(document.referrer) +
+        '\nMethod: ' +
+        data.method +
+        ' ',
         JSON.stringify(data, null, 1),
-        true,
-        '#008744'
+        '#008744',
+        true
       );
 
       parent.postMessage(
@@ -95,34 +180,41 @@ export class OfsMessageService {
     }
   }
 
-  // Acciones en OFSC
+  // OFS actions
   pluginOpen(message: any) {
     this.messageSubject.next(message);
     this.messageSubject.complete();
     console.log(message);
   }
 
-  close() {
-    let messageData = {
-      apiVersion: 1,
-      method: 'close',
-    };
+  // close() {
+  //   let messageData = {
+  //     apiVersion: OfsMessageService.API_VERSION,
+  //     method: 'close',
+  //   };
 
-    this.sendPostMessageData(messageData);
-  }
+  //   this.sendPostMessageData(messageData);
+  // }
 
-  closeAndUpdate(activityId: number, resourceId: number) {
-    let messageData = {
-      apiVersion: 1,
-      method: 'close',
-      activity: { external_id: resourceId },
-    };
+  // closeAndUpdate(activityId: number, resourceId: number) {
+  //   let messageData = {
+  //     apiVersion: 1,
+  //     method: 'close',
+  //     activity: { external_id: resourceId },
+  //   };
 
-    this.sendPostMessageData(messageData);
-  }
+  //   this.sendPostMessageData(messageData);
+  // }
 
   // Aux
   debugMode: boolean = isDevMode();
+
+  private logEvent(event: MessageEvent) {
+    if (typeof event.data === 'undefined') {
+      this.log(window.location.host + ' <- NO DATA' + this.getDomain(event.origin), null, null, true);
+      return;
+    }
+  }
 
   sendOKMessage() {
     let messageData = {
@@ -132,7 +224,7 @@ export class OfsMessageService {
     this.sendPostMessageData(messageData);
   }
 
-  log(title: any, data: any, warning?: boolean, color?: string) {
+  log(title: string, data?: string | null, color?: string | null, warning?: boolean) {
     if (!this.debugMode) {
       return;
     }
@@ -143,9 +235,9 @@ export class OfsMessageService {
       console.groupCollapsed(
         '%c[API Plugin] ' + title,
         'color: ' +
-          color +
-          '; ' +
-          (warning ? 'font-weight: bold;' : 'font-weight: normal;')
+        color +
+        '; ' +
+        (warning ? 'font-weight: bold;' : 'font-weight: normal;')
       );
       console.log('[API Plugin] ' + data);
       console.groupEnd();

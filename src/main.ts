@@ -21,12 +21,12 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(withInterceptors([loadingInterceptor])),
     { provide: XmlParserService, useClass: FastXmlParserService },
     { provide: AppConfig },
-    {
-      provide: APP_INITIALIZER,
-      deps: [AppConfig],
-      multi: true,
-      useFactory: (conf: AppConfig) => () => conf.load(),
-    },
+    // {
+    //   provide: APP_INITIALIZER,
+    //   deps: [AppConfig],
+    //   multi: true,
+    //   useFactory: (conf: AppConfig) => () => conf.load(),
+    // },
     importProvidersFrom([BrowserAnimationsModule, MatDialogModule]),
   ],
 });
