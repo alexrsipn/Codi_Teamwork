@@ -1,10 +1,17 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
+import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {firstValueFrom, map} from 'rxjs';
+
+export interface ComplexityLevel {
+  grade: number;
+  neighbor: number;
+  intersectionCount: number;
+}
 
 @Injectable()
 export class AppConfig {
   private config: { [key: string]: string } = {};
+  private complexityCatalog: ComplexityLevel[] = [];
 
   constructor(private http: HttpClient) {}
 
@@ -39,5 +46,19 @@ export class AppConfig {
           },
         });
     });
+  }
+
+  async loadComplexityCatalog(): Promise<void> {
+    try {
+      this.complexityCatalog = await firstValueFrom(this.http.get<ComplexityLevel[]>('assets/config/complexity.js'));
+      console.log("Complexity catalog loaded successfully")
+    } catch (error) {
+      console.error('Error loading complexity catalog', error);
+      this.complexityCatalog = [];
+    }
+  }
+
+  getComplexityCatalog(): ComplexityLevel[] {
+    return this.complexityCatalog;
   }
 }

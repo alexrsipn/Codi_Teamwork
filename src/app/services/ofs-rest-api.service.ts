@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import {GetAnActivityTypeResponse, UpdateAnActivityBodyParams} from "../types/ofs-rest-api";
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +19,38 @@ export class OfsRestApiService {
   setCredentials(credentials: {user: string; pass: string}) {
     this.credentials = credentials;
     return this;
+  }
+
+  setAFileProperty(activityId: string, propertyLabel: string, file: Blob) {
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/activities/${activityId}/${propertyLabel}`;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'image/png',
+    });
+    return this.http.put<any>(endpoint, file, {headers: headers});
+  }
+
+  updateActivitySignRating(activityId: number, bodyParams: UpdateAnActivityBodyParams) {
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/activities/${activityId}`;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'application/json'
+    });
+    const params = new HttpParams({
+      fromObject: {
+        ...bodyParams
+      }
+    })
+    return this.http.patch<any>(endpoint, bodyParams, {headers: headers});
+  }
+
+  getAnActivityType(activityType: string) {
+    const endpoint = `${this.baseUrl}/rest/ofscMetadata/v1/activityTypes/${activityType}`;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'image/png',
+    });
+    return this.http.get<GetAnActivityTypeResponse>(endpoint, {headers: headers});
   }
 
   getAFileProperty(pathParams: {activityId: string; propertyLabel: string}) {

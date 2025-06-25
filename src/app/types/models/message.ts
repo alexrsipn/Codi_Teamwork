@@ -7,7 +7,7 @@ export interface Message {
   resource: Resource;
   team: Team;
   queue: Queue;
-  activity: any;
+  activity: Activity;
   activityList: any[];
   inventoryList: any[];
   buttonId: string;
@@ -16,6 +16,19 @@ export interface Message {
   allowedProcedures: AllowedProcedures;
   sendMessageAsJsObject?: boolean;
   sendInitData?: boolean;
+}
+
+export interface Activity {
+  XA_CLIENTSIGN_OVER: string,
+  XA_CLIENTSIGN_RATING: string,
+  XA_ACCOUNTTYPE: string,
+  XA_JOBTYPE: string,
+  XA_MAGIC_TOWN_FLAG: string,
+  XA_MST_ACT: string,
+  XA_QUALITY_JOB: string,
+  appt_number: string,
+  aworktype: string,
+  aid: number,
 }
 
 export interface Format {
@@ -69,6 +82,7 @@ export interface SecuredData {
   ofscRestClientId: string;
   ofscRestSecretId: string;
   urlOFSC: string;
+  parametroComplejidad: number;
 }
 
 export interface AllowedProcedures {

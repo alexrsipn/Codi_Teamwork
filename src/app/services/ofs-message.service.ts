@@ -76,15 +76,25 @@ export class OfsMessageService {
       ...additionalData,
       apiVersion: OfsMessageService.API_VERSION,
       method: 'update',
+      /*activity: { XA_CLIENTSIGN_RATING: additionalData.activity!.XA_CLIENTSIGN_RATING }*/
     };
     this.sendPostMessageData(message);
   }
+/*  updateSignRating(clientSignRating: string): void {
+    const message: Partial<Message> = {
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'update',
+      activity: { XA_CLIENTSIGN_RATING: clientSignRating }
+    };
+    console.log(message);
+    this.sendPostMessageData(message);
+  }*/
 
   closeAndUpdate(signatureValid: boolean) {
     const message: Partial<Message> = {
       apiVersion: OfsMessageService.API_VERSION,
       method: 'close',
-      activity: { XA_SIGN_VALID: signatureValid }
+      /*activity: { XA_SIGN_VALID: signatureValid }*/
     };
     this.sendPostMessageData(message);
   }

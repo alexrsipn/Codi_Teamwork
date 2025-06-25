@@ -1,31 +1,92 @@
-<!-- <header>
-  <h1>Plugin SKY OFSC</h1>
-</header> -->
 <ng-container *ngIf="vm$ | async as vm">
-  <div class="content">
-    <p>Activity ID: {{ vm.activityId }}</p>
-    <div class="center">
-      <button mat-raised-button color="accent" (click)="Initial()">
-        Ejecutar
-      </button>
-    </div>
-    <div style="display: flex; justify-content: center; align-items: center; width: 100%; border: 2px solid black">
-      <!-- <button *ngIf="vm.clientSignature" mat-raised-button color="accent" (click)="createImageFromBlob(vm.clientSignature!)">
-        Crear
-      </button> -->
-      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 50%">      
-        <img *ngIf="vm.clientSignature" alt="Client Signature" [src]="createImageFromBlob(vm.clientSignature)" />
-        <span>Firma del cliente</span>
-      </div>
-      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 50%">
-        <img *ngIf="vm.technitianSignature" alt="Client Signature" [src]="createImageFromBlob(vm.technitianSignature)" />
-        <span>Firma del técnico</span>
-      </div>
-    </div>
-    <!-- <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
-      <img *ngIf="vm.technitianSignatureHandled" alt="Technician Signature Handled" [src]="createImageBase(vm.technitianSignatureHandled)" />
-      <img *ngIf="vm.clientSignatureHandled" alt="Client Signature Handled" [src]="createImageBase(vm.clientSignatureHandled)" />
-    </div> -->
+  <div>
+    <h3 style="text-align: center; padding: 0.5rem 0">Orden de trabajo: <b>{{vm.apptNumber}}</b></h3>
+<!--    <p>Jobtype: {{vm.jobType}}</p>
+    <p>Worktype: {{vm.aworkType}}</p>
+    <p>Firma cliente: {{vm.clientSignVisibilitySettings}}</p>
+    <p>AccountType: {{vm.accountType}}</p>
+    <p>MagicTown: {{vm.magicTownFlag}}</p>-->
+    <mat-stepper [orientation]="(stepperOrientation | async)!" [linear]="true">
+      <mat-step *ngIf="vm.clientSignVisibilitySettings" [stepControl]="firstFormGroup" label="Firma">
+        <div>
+          <!--<app-canvas [techResult]="vm.technicianSignatureResult" [clientResult]="vm.clientSignatureResult?.text"></app-canvas>-->
+          <app-canvas [clientResult]="vm.clientSignatureResult?.text"></app-canvas>
+        </div>
+        <div style="display: flex; justify-content: space-around; align-items: center; width: 100%; padding: 1rem 0" class="center">
+          <button mat-raised-button color="accent" (click)="clearSignatures()" *ngIf="canClearSignatures">
+            Reiniciar
+          </button>
+          <button mat-raised-button color="primary" (click)="processDrawnSignatures()" *ngIf="canValidateSignatures && !vm.clientSignatureResult?.result && !vm.technicianSignatureResult?.result">
+            Validar
+          </button>
+<!--          <button mat-raised-button color="primary" (click)="sendDrawnSignatures()" *ngIf="vm.clientSignatureResult?.result && vm.technicianSignatureResult?.result">
+            Enviar
+          </button>-->
+        </div>
+<!--        <div style="display: flex; justify-content: flex-end; align-items: center; width: 100%; padding: 1rem 0">
+          <button mat-raised-button matStepperNext>Siguiente></button>
+        </div>-->
+      </mat-step>
+      <mat-step [stepControl]="secondFormGroup" label="Encuesta">
+        <form [formGroup]="secondFormGroup" style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.5rem">
+<!--          <div>
+            <mat-form-field>
+              <mat-label>Códigos</mat-label>
+              <input matInput formControlName="secondCtrl" required>
+            </mat-form-field>
+          </div>-->
+          <div *ngIf="vm.masterFlag==='Y'">
+            <mat-form-field>
+              <mat-label>¿Está conforme con el servicio?</mat-label>
+              <mat-select formControlName="serviceConformityCtrl">
+                <mat-option value="Fallido Cerrado">Fallido Cerrado</mat-option>
+                <mat-option value="OK Cliente Cerrado">OK Cliente Cerrado</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-error *ngIf="secondFormGroup.get('serviceConformityCtrl')?.hasError('required') && secondFormGroup.get('serviceConformityCtrl')?.touched">
+              Este campo es requerido
+            </mat-error>
+          </div>
+          <!--<div *ngIf="vm.aworkType === 'GTC' && vm.magicTownFlag!=='1' && vm.accountType!.includes('Residencial')" style="display: flex; flex-direction: column; align-items: center">-->
+          <div *ngIf="vm.tcSectionVisibilitySettings">
+            <mat-label>¿El trabajo realizado fue de tu entera satisfacción?</mat-label>
+            <mat-radio-group formControlName="satisfactionCtrl" aria-label="Selecciona una opción" style="display: flex; justify-content: space-around; align-items: center; width: 100%">
+              <mat-radio-button value="Y">Si</mat-radio-button>
+              <mat-radio-button value="N">No</mat-radio-button>
+            </mat-radio-group>
+            <mat-error *ngIf="secondFormGroup.get('satisfactionCtrl')?.hasError('required') && secondFormGroup.get('satisfactionCtrl')?.touched">
+              Debes seleccionar una opción
+            </mat-error>
+            <div *ngIf="secondFormGroup.get('satisfactionCtrl')?.value === 'Y'">
+              <mat-label>Selecciona los servicios comprobados:</mat-label>
+              <mat-selection-list formControlName="checkedServicesCtrl" multiple>
+                <mat-list-option value="Internet">Internet</mat-list-option>
+                <mat-list-option value="Television">Televisión</mat-list-option>
+                <mat-list-option value="Telefonia">Telefonía</mat-list-option>
+              </mat-selection-list>
+              <mat-error *ngIf="secondFormGroup.get('checkedServicesCtrl')?.hasError('required') &&secondFormGroup.get('checkedServicesCtrl')?.touched">
+                Debes seleccionar al menos un servicio
+              </mat-error>
+            </div>
+          </div>
+          <!--<div *ngIf="vm.magicTownFlag!=='1' && (vm.accountType!.includes('Residencial') || !vm.accountType)">-->
+          <div *ngIf="vm.othersVisibilitySettings">
+            <mat-label>Otros: </mat-label>
+            <textarea formControlName="othersCtrl" rows="5" cols="50" style="resize: none; width: 100%; border-radius: 0.25rem" required></textarea>
+            <mat-error *ngIf="secondFormGroup.get('othersCtrl')?.hasError('required') && secondFormGroup.get('othersCtrl')?.touched">
+              Este campo es requerido
+            </mat-error>
+          </div>
+<!--          <div>
+            <button mat-raised-button matStepperPrevious>Anterior</button>
+            <button mat-raised-button matStepperNext>Siguiente></button>
+          </div>-->
+        </form>
+        <div style="display: flex; justify-content: center; align-items: center; width: 100%; padding: 1rem 0">
+          <button mat-raised-button color="primary" (click)="submit()" [disabled]="!secondFormGroup.valid">Finalizar</button>
+        </div>
+      </mat-step>
+    </mat-stepper>
   </div>
 </ng-container>
 <!-- <footer>

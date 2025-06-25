@@ -14,19 +14,25 @@ import {
 import { AppConfig } from './app/services/app-config.service';
 import { APP_INITIALIZER, importProvidersFrom } from '@angular/core';
 
+export function initializeAppConfig(appConfig: AppConfig) {
+  return () => appConfig.loadComplexityCatalog();
+}
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(ROUTES),
     { provide: LocationStrategy, useClass: HashLocationStrategy },
     provideHttpClient(withInterceptors([loadingInterceptor])),
     { provide: XmlParserService, useClass: FastXmlParserService },
-    { provide: AppConfig },
-    // {
-    //   provide: APP_INITIALIZER,
-    //   deps: [AppConfig],
-    //   multi: true,
-    //   useFactory: (conf: AppConfig) => () => conf.load(),
-    // },
+    AppConfig,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAppConfig,
+      deps: [AppConfig],
+      multi: true
+    },
+    /*{ provide: AppConfig },
+    { provide: APP_INITIALIZER, deps: [AppConfig], multi: true, useFactory: (conf: AppConfig) => () => conf.loadComplexityCatalog()},*/
     importProvidersFrom([BrowserAnimationsModule, MatDialogModule]),
   ],
 });
