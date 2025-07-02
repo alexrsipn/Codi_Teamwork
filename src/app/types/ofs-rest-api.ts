@@ -13,5 +13,11 @@ export interface GetAnActivityTypeResponse {
 }
 
 export interface UpdateAnActivityBodyParams {
-  XA_CLIENTSIGN_RATING: number
+  XA_CLIENTSIGN_RATING?: number,
+  XA_STATUS_ORDER_SIEBEL?: string | null,
+  XA_QUALITY_JOB?: string,
+  XA_SERV_INTERNET?: number,
+  XA_SERV_TV?: number,
+  XA_SERV_TEL?: number,
+  XA_OTHER_COMMENTS?: string
 }

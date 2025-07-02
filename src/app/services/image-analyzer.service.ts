@@ -31,10 +31,11 @@ export class ImageAnalyzerService {
         neighbor: 1,
         intersectionCount: 0
       };
-      console.warn('Usando fallback para el nivel de complejidad: ', this.currentComplexitySettings);
-    } else {
-      console.log('Nivel de complejidad establecido: ', this.currentComplexitySettings);
+      /*console.warn('Usando fallback para el nivel de complejidad: ', this.currentComplexitySettings);*/
     }
+/*    else {
+      console.log('Nivel de complejidad establecido: ', this.currentComplexitySettings);
+    }*/
   }
 
   async getBinaryImage(blob: Blob): Promise<Image> {

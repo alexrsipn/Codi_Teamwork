@@ -6,7 +6,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Store } from 'src/app/plugin.store';
 import { CanvasComponent } from "../canvas/canvas.component";
 import { MatStepper, MatStepperModule, StepperOrientation } from "@angular/material/stepper";
-import {AbstractControl, FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
+import {AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {filter, first, map, Observable, Subject, takeUntil} from "rxjs";
 import { BreakpointObserver } from "@angular/cdk/layout";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -34,12 +34,16 @@ export class InitialComponent implements OnInit, OnDestroy{
   firstFormGroup = this._formBuilder.group({
     firstCtrl: ['', Validators.required]
   });
-  secondFormGroup = this._formBuilder.group({
+  secondFormGroup: FormGroup<{
+    serviceConformityCtrl: FormControl<string | null>;
+    satisfactionCtrl: FormControl<string | null>;
+    checkedServicesCtrl: FormControl<string[] | null>;
+    othersCtrl: FormControl<string | null>;
+  }> = this._formBuilder.group({
     serviceConformityCtrl: [''],
     satisfactionCtrl: [''],
     checkedServicesCtrl: [[] as string[]],
     othersCtrl: ['']
-    /*secondCtrl: ['', Validators.required]*/
   });
 
   stepperOrientation: Observable<StepperOrientation>;
@@ -49,6 +53,7 @@ export class InitialComponent implements OnInit, OnDestroy{
     this.stepperOrientation = breakpointObserver.observe(['(min-width: 800px)']).pipe(map(({matches}) => (matches ? 'horizontal' : 'vertical')));
   }
 
+  // Lifecycle
   ngOnInit() {
     this.store.vm$.pipe(
       takeUntil(this.destroy$)
@@ -96,7 +101,12 @@ export class InitialComponent implements OnInit, OnDestroy{
       this.secondFormGroup.updateValueAndValidity();
       })
   }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
+  // Helpers
   private applyCheckedServicesValidators(satisfactionValue: string | null | undefined, checkedServicesCtrl: AbstractControl | null) {
     if (checkedServicesCtrl) {
       if (satisfactionValue && satisfactionValue === 'Y') {
@@ -132,7 +142,7 @@ export class InitialComponent implements OnInit, OnDestroy{
               this.stepper.selected.completed = true;
               this.stepper.selected.editable = false;
               this.store.submitDrawnSignatures();
-              /*this.stepper.next();*/
+              this.stepper.next();
             }
           } else {
             console.log("La firma del cliente no es válida, no se avanzará en el flujo.");
@@ -150,6 +160,7 @@ export class InitialComponent implements OnInit, OnDestroy{
     }
   }
 
+  // Methods
   clearSignatures() {
     if (this.canvasComponent) {
       this.canvasComponent.clearClientCanvas();
@@ -169,27 +180,9 @@ export class InitialComponent implements OnInit, OnDestroy{
       }
     }
   }
-
-  get canValidateSignatures(): boolean {
-    /*return !!(this.canvasComponent?.clientHasContent && this.canvasComponent?.techHasContent);*/
-    return !!(this.canvasComponent?.clientHasContent);
-  }
-
-  get canClearSignatures(): boolean {
-    /*return !!(this.canvasComponent?.clientHasContent || this.canvasComponent?.techHasContent);*/
-    return !!(this.canvasComponent?.clientHasContent);
-  }
-
-  close() {
-    this.store.close();
-  }
-/*  sendDrawnSignatures() {
-    this.store.submitDrawnSignatures();
-  }*/
   submit() {
     if (this.secondFormGroup.valid) {
-      /*console.log("Valores de la encuesta: ", this.secondFormGroup.value);*/
-      this.store.completeActivity(this.secondFormGroup.value);
+      this.store.completeActivity(this.secondFormGroup.getRawValue());
     } else {
       Object.values(this.secondFormGroup.controls).forEach(control => {
         control.markAsTouched();
@@ -197,8 +190,26 @@ export class InitialComponent implements OnInit, OnDestroy{
       console.log("El formulario de encuesta no es válido");
     }
   }
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+
+  // Getters
+  get canValidateSignatures(): boolean {
+    /*return !!(this.canvasComponent?.clientHasContent && this.canvasComponent?.techHasContent);*/
+    return !!(this.canvasComponent?.clientHasContent);
+  }
+  get canClearSignatures(): boolean {
+    /*return !!(this.canvasComponent?.clientHasContent || this.canvasComponent?.techHasContent);*/
+    return !!(this.canvasComponent?.clientHasContent);
+  }
+  get serviceConformityCtrlHasError() {
+    return this.secondFormGroup.get('serviceConformityCtrl')?.hasError('required');
+  }
+  get satisfactionCtrlHasError() {
+    return this.secondFormGroup.get('satisfactionCtrl')?.hasError('required')
+  }
+  get checkedServicesCtrlHasError() {
+    return this.secondFormGroup.get('checkedServicesCtrl')?.hasError('requiredSelection');
+  }
+  get otherCtrlHasError() {
+    return this.secondFormGroup.get('othersCtrl')?.hasError('required');
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import { catchError, concatMap, delay, EMPTY, from, switchMap, tap, throwError } from 'rxjs';
+import {catchError, concatMap, delay, EMPTY, from, map, switchMap, tap, throwError} from 'rxjs';
 import { OfsMessageService } from './services/ofs-message.service';
 import { Message } from './types/models/message';
 import { OfsRestApiService } from './services/ofs-rest-api.service';
@@ -8,6 +8,8 @@ import { ImageAnalyzerService } from './services/image-analyzer.service';
 import Image from 'image-js';
 import { DialogService } from "./services/dialog.service";
 import { HttpErrorResponse } from "@angular/common/http";
+import {SurveyData} from "./types/plugin-types";
+import {UpdateAnActivityBodyParams} from "./types/ofs-rest-api";
 
 interface State {
   activityId: number | string;
@@ -148,11 +150,11 @@ export class Store extends ComponentStore<State> {
       tap(({groupLabel}) => this.visibilitySettings(groupLabel!)),
     )
   );
-  readonly loadGlobalProps = this.effect(($) =>
+/*  readonly loadGlobalProps = this.effect(($) =>
     $.pipe(
       concatMap(() => this.ofsProperties),
     )
-  );
+  );*/
   readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(
     tap(() => this.setClientSignatureResult(undefined)),
     tap((blob) => this.setClientSignature(blob)),
@@ -178,21 +180,6 @@ export class Store extends ComponentStore<State> {
       return Promise.resolve(complexity);
     }),
   ));
-  readonly showValidationResults = this.effect($ => $.pipe(
-    delay(1000),
-    tap(() => {
-      const {clientSignatureResult, technicianSignatureResult} = this.get();
-      console.log(clientSignatureResult);
-      console.log(technicianSignatureResult);
-      if (!clientSignatureResult?.result && !technicianSignatureResult?.result) {
-        this.dialog.success('Las firmas del cliente y el técnico no son válidas');
-        /*this.submitDrawnSignatures();*/
-      }
-      if (!clientSignatureResult?.result && technicianSignatureResult?.result) {
-        this.dialog.error('Las firmas del cliente y el técnico son válidas');
-      }
-    })
-  ));
   readonly submitDrawnSignatures = this.effect((blob$) => blob$.pipe(
     concatMap(() => {
       const {clientSignatureHandled, clientSignatureResult, activityId} = this.get();
@@ -208,28 +195,11 @@ export class Store extends ComponentStore<State> {
           }))),
         concatMap(() => {
           const {activityId, clientSignatureResult} = this.get();
-          return this.ofsRestApiService.updateActivitySignRating(Number(activityId), {XA_CLIENTSIGN_RATING: Number(clientSignatureResult!.quality)});
+          /*return this.ofsRestApiService.updateActivitySignRating(Number(activityId), {XA_CLIENTSIGN_RATING: Number(clientSignatureResult!.quality)});*/
+          return this.ofsRestApiService.updateAnActivity(Number(activityId), {XA_CLIENTSIGN_RATING: Number(clientSignatureResult!.quality)});
         })
       )
     }),
-/*    concatMap(() => {
-      const {activityId, clientSignatureResult} = this.get();
-      return this.ofsRestApiService.updateActivitySignRating(Number(activityId), {XA_CLIENTSIGN_RATING: Number(clientSignatureResult!.quality)});
-    }),*/
-/*    concatMap(() => {
-        const {technicianSignatureHandled, technicianSignatureResult, activityId} = this.get();
-        if (!technicianSignatureResult!.result) {
-          this.dialog.error('Firma del técnico no válida');
-          return EMPTY;
-        }
-        return from(technicianSignatureHandled!.toBlob('image/png')).pipe(
-          concatMap(processedTechnicianSignatureBlob => this.ofsRestApiService.setAFileProperty(activityId.toString(), 'XA_TECH_SIGNATURE', processedTechnicianSignatureBlob).pipe(
-            catchError((error: HttpErrorResponse) => {
-              this.dialog.error(`Error al enviar firma del técnico: ${error.message}`);
-              return throwError(() => error);
-            }))
-          ))
-      }),*/
     tap({
       complete: () => {
         this.dialog.success('Firmas enviadas correctamente');
@@ -241,14 +211,34 @@ export class Store extends ComponentStore<State> {
     }),
   ));
 
-  readonly completeActivity = this.effect<object>($ => $.pipe(
-    tap((survey) => this.handleSurvey(survey))
+  readonly completeActivity = this.effect<SurveyData>($ => $.pipe(
+    map((survey: SurveyData) => this.handleSurvey(survey)),
+    concatMap((params) => {
+      const { activityId } = this.get();
+      return this.ofsRestApiService.updateAnActivity(Number(activityId), params)
+    }),
+    delay(300),
+    switchMap(() => this.ofsRestApiService.completeAnActivity(Number(this.get().activityId))),
+    tap(() => this.ofs.close({}))
   ));
 
   readonly close = this.effect(($) => $.pipe(tap((_) => this.ofs.close())));
 
-  private handleSurvey(rawSurvey: object) {
-    console.log(rawSurvey);
+  private handleSurvey(rawSurvey: SurveyData): UpdateAnActivityBodyParams {
+    const params: Partial<UpdateAnActivityBodyParams> = {}
+    if (rawSurvey.serviceConformityCtrl) {
+      params.XA_STATUS_ORDER_SIEBEL = rawSurvey.serviceConformityCtrl
+    }
+    if (rawSurvey.satisfactionCtrl && rawSurvey.checkedServicesCtrl) {
+      params.XA_QUALITY_JOB = rawSurvey.satisfactionCtrl;
+      if (rawSurvey.checkedServicesCtrl.includes('Internet')) params.XA_SERV_INTERNET = 1;
+      if (rawSurvey.checkedServicesCtrl.includes('Television')) params.XA_SERV_TV = 1;
+      if (rawSurvey.checkedServicesCtrl.includes('Telefono')) params.XA_SERV_TEL = 1;
+    }
+    if (rawSurvey.othersCtrl) {
+      params.XA_OTHER_COMMENTS = rawSurvey.othersCtrl;
+    }
+    return params;
   }
 
   private visibilitySettings(aworkTypeGroup: string) {

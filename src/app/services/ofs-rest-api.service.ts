@@ -30,18 +30,36 @@ export class OfsRestApiService {
     return this.http.put<any>(endpoint, file, {headers: headers});
   }
 
+  updateAnActivity(activityId: number, bodyParams: UpdateAnActivityBodyParams) {
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/activities/${activityId}`;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'application/json'
+    });
+    return this.http.patch<any>(endpoint, bodyParams, {headers: headers});
+  }
+
   updateActivitySignRating(activityId: number, bodyParams: UpdateAnActivityBodyParams) {
     const endpoint = `${this.baseUrl}/rest/ofscCore/v1/activities/${activityId}`;
     const headers = new HttpHeaders({
       Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
       'Content-Type': 'application/json'
     });
-    const params = new HttpParams({
+/*    const params = new HttpParams({
       fromObject: {
         ...bodyParams
       }
-    })
+    })*/
     return this.http.patch<any>(endpoint, bodyParams, {headers: headers});
+  }
+
+  completeAnActivity(activityId: number) {
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/activities/${activityId}/custom-actions/complete`
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'application/json'
+    });
+    return this.http.post<any>(endpoint, {}, {headers: headers});
   }
 
   getAnActivityType(activityType: string) {

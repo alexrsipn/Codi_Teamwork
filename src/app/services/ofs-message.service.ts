@@ -66,7 +66,7 @@ export class OfsMessageService {
     const message: Partial<Message> = {
       ...additionalData,
       apiVersion: OfsMessageService.API_VERSION,
-      method: 'update'
+      method: 'close'
     };
     this.sendPostMessageData(message);
   }
