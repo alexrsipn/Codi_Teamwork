@@ -1,6 +1,6 @@
 export interface SurveyData {
-  serviceConformityCtrl: string | null | undefined;
-  satisfactionCtrl: string | null | undefined;
-  checkedServicesCtrl: string[] | null | undefined;
-  othersCtrl: string | null | undefined;
+  serviceConformityCtrl?: string | null;
+  satisfactionCtrl?: string | null;
+  checkedServicesCtrl?: string[] | null;
+  othersCtrl?: string | null;
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import {catchError, concatMap, delay, EMPTY, from, map, switchMap, tap, throwError} from 'rxjs';
+import { catchError, concatMap, delay, EMPTY, from, map, switchMap, tap, throwError } from 'rxjs';
 import { OfsMessageService } from './services/ofs-message.service';
 import { Message } from './types/models/message';
 import { OfsRestApiService } from './services/ofs-rest-api.service';
@@ -8,11 +8,11 @@ import { ImageAnalyzerService } from './services/image-analyzer.service';
 import Image from 'image-js';
 import { DialogService } from "./services/dialog.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import {SurveyData} from "./types/plugin-types";
-import {UpdateAnActivityBodyParams} from "./types/ofs-rest-api";
+import { SurveyData } from "./types/plugin-types";
+import { UpdateAnActivityBodyParams } from "./types/ofs-rest-api";
 
 interface State {
-  activityId: number | string;
+  activityId?: number | string;
   accountType?: string;
   jobType?: string;
   magicTownFlag?: string;
@@ -34,7 +34,6 @@ interface State {
 }
 
 const initialState = {
-  activityId: '5844',
   complexity: 1,
   clientSignatureResult: undefined,
   tcSectionVisibilitySettings: false,
@@ -48,7 +47,6 @@ const initialState = {
 })
 export class Store extends ComponentStore<State> {
   constructor(
-    // private readonly router: Router,
     private readonly ofs: OfsMessageService,
     private readonly ofsRestApiService: OfsRestApiService,
     private readonly imageAnalyzer: ImageAnalyzerService,
@@ -57,17 +55,10 @@ export class Store extends ComponentStore<State> {
     super(initialState);
     this.handleOpenMessage(this.ofs.openMessage$);
     this.ofs.ready();
-    // this.loadGlobalProps();
   }
 
   // Selectors
   readonly vm$ = this.select((state) => state);
-
-  readonly ofsProperties = this.select(
-    ({ activityId }) => ({
-      activityId
-    })
-  );
 
   //Updaters
   readonly setFromOfsMessage = this.updater((state, message: Message) => {
@@ -89,16 +80,16 @@ export class Store extends ComponentStore<State> {
       ...state,
       clientSignature,
     }));
-  readonly setTechnicianSignature = this.updater<Blob>(
+/*  readonly setTechnicianSignature = this.updater<Blob>(
     (state, technicianSignature) => ({
       ...state,
       technicianSignature,
-    }));
-  readonly setTechnicianSignatureHandled = this.updater<Image>(
+    }));*/
+/*  readonly setTechnicianSignatureHandled = this.updater<Image>(
     (state, technicianSignatureHandled) => ({
       ...state,
       technicianSignatureHandled,
-    }));
+    }));*/
   readonly setClientSignatureHandled = this.updater<Image>(
     (state, clientSignatureHandled) => ({
       ...state,
@@ -109,11 +100,11 @@ export class Store extends ComponentStore<State> {
       ...state,
       clientSignatureResult,
     }));
-  readonly setTechnicianSignatureResult = this.updater<{text: string, result: boolean, quality: number}>(
+/*  readonly setTechnicianSignatureResult = this.updater<{text: string, result: boolean, quality: number}>(
     (state, technicianSignatureResult) => ({
       ...state,
       technicianSignatureResult,
-    }));
+    }));*/
   readonly setComplexity = this.updater((state, complexity: number) => ({
     ...state,
     complexity
@@ -150,11 +141,6 @@ export class Store extends ComponentStore<State> {
       tap(({groupLabel}) => this.visibilitySettings(groupLabel!)),
     )
   );
-/*  readonly loadGlobalProps = this.effect(($) =>
-    $.pipe(
-      concatMap(() => this.ofsProperties),
-    )
-  );*/
   readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(
     tap(() => this.setClientSignatureResult(undefined)),
     tap((blob) => this.setClientSignature(blob)),
@@ -168,7 +154,7 @@ export class Store extends ComponentStore<State> {
       return Promise.resolve(complexity);
     }),
   ));
-  readonly processDrawnTechSignature = this.effect<Blob>((blob$) => blob$.pipe(
+/*  readonly processDrawnTechSignature = this.effect<Blob>((blob$) => blob$.pipe(
     tap((blob) => this.setTechnicianSignature(blob)),
     switchMap((blob: Blob) => from(this.imageAnalyzer.getBinaryImage(blob))),
     tap((image: Image) => this.setTechnicianSignatureHandled(image)),
@@ -179,7 +165,7 @@ export class Store extends ComponentStore<State> {
       this.setTechnicianSignatureResult(complexity);
       return Promise.resolve(complexity);
     }),
-  ));
+  ));*/
   readonly submitDrawnSignatures = this.effect((blob$) => blob$.pipe(
     concatMap(() => {
       const {clientSignatureHandled, clientSignatureResult, activityId} = this.get();
@@ -188,14 +174,13 @@ export class Store extends ComponentStore<State> {
         return EMPTY;
       }
       return from(clientSignatureHandled!.toBlob('image/png')).pipe(
-        concatMap(processedClientSignatureBlob => this.ofsRestApiService.setAFileProperty(activityId.toString(), 'XA_CUSTOMER_SIGNATURE', processedClientSignatureBlob).pipe(
+        concatMap(processedClientSignatureBlob => this.ofsRestApiService.setAFileProperty(activityId!.toString(), 'XA_CUSTOMER_SIGNATURE', processedClientSignatureBlob).pipe(
           catchError((error: HttpErrorResponse) => {
             this.dialog.error(`Error al enviar firma del cliente: ${error.message}`);
             return throwError(() => error);
           }))),
         concatMap(() => {
           const {activityId, clientSignatureResult} = this.get();
-          /*return this.ofsRestApiService.updateActivitySignRating(Number(activityId), {XA_CLIENTSIGN_RATING: Number(clientSignatureResult!.quality)});*/
           return this.ofsRestApiService.updateAnActivity(Number(activityId), {XA_CLIENTSIGN_RATING: Number(clientSignatureResult!.quality)});
         })
       )
@@ -213,16 +198,12 @@ export class Store extends ComponentStore<State> {
 
   readonly completeActivity = this.effect<SurveyData>($ => $.pipe(
     map((survey: SurveyData) => this.handleSurvey(survey)),
-    concatMap((params) => {
-      const { activityId } = this.get();
-      return this.ofsRestApiService.updateAnActivity(Number(activityId), params)
-    }),
+    concatMap((params) => this.ofsRestApiService.updateAnActivity(Number(this.get().activityId), params)),
     delay(300),
     switchMap(() => this.ofsRestApiService.completeAnActivity(Number(this.get().activityId))),
     tap(() => this.ofs.close({}))
   ));
 
-  readonly close = this.effect(($) => $.pipe(tap((_) => this.ofs.close())));
 
   private handleSurvey(rawSurvey: SurveyData): UpdateAnActivityBodyParams {
     const params: Partial<UpdateAnActivityBodyParams> = {}

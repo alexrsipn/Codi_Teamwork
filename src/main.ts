@@ -31,8 +31,6 @@ bootstrapApplication(AppComponent, {
       deps: [AppConfig],
       multi: true
     },
-    /*{ provide: AppConfig },
-    { provide: APP_INITIALIZER, deps: [AppConfig], multi: true, useFactory: (conf: AppConfig) => () => conf.loadComplexityCatalog()},*/
     importProvidersFrom([BrowserAnimationsModule, MatDialogModule]),
   ],
 });

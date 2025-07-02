@@ -1,24 +1,19 @@
 import { Route } from '@angular/router';
-import { InitialComponent } from './components/initial/initial.component';
-import { ResumeComponent } from './components/resume/resume.component';
+import { CompleteComponent } from './components/complete/complete.component';
 
 export const ROUTES: Route[] = [
   {
-    path: 'initial',
-    component: InitialComponent,
-  },
-  {
-    path: 'resume',
-    component: ResumeComponent,
+    path: 'completeActivity',
+    component: CompleteComponent,
   },
   {
     path: '',
-    redirectTo: 'initial',
+    redirectTo: 'completeActivity',
     pathMatch: 'full',
   },
   {
     path: '*',
-    redirectTo: 'initial',
+    redirectTo: 'completeActivity',
     pathMatch: 'full',
   },
 ];

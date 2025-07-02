@@ -1,6 +1,6 @@
-import {AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild} from '@angular/core';
-import {MatCardModule} from "@angular/material/card";
-import {NgIf} from "@angular/common";
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import { MatCardModule } from "@angular/material/card";
+import { NgIf } from "@angular/common";
 
 @Component({
   selector: 'app-canvas',

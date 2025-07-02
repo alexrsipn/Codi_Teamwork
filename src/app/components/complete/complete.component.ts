@@ -1,13 +1,12 @@
 import { CommonModule } from '@angular/common';
-import {Component, inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-/*import { InitialStore } from './initial.store';*/
 import { Store } from 'src/app/plugin.store';
 import { CanvasComponent } from "../canvas/canvas.component";
 import { MatStepper, MatStepperModule, StepperOrientation } from "@angular/material/stepper";
-import {AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
-import {filter, first, map, Observable, Subject, takeUntil} from "rxjs";
+import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
+import { filter, first, map, Observable, Subject, takeUntil } from "rxjs";
 import { BreakpointObserver } from "@angular/cdk/layout";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatInputModule } from "@angular/material/input";
@@ -17,13 +16,12 @@ import { MatDividerModule } from "@angular/material/divider";
 import { MatRadioModule } from "@angular/material/radio";
 
 @Component({
-  selector: 'app-initial',
+  selector: 'app-complete',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatSlideToggleModule, CanvasComponent, MatStepperModule, MatFormFieldModule, FormsModule, ReactiveFormsModule, MatInputModule, MatSelectModule, MatListModule, MatDividerModule, MatRadioModule],
-  /*providers: [InitialStore],*/
-  templateUrl: './initial.component.html',
+  templateUrl: './complete.component.html',
 })
-export class InitialComponent implements OnInit, OnDestroy{
+export class CompleteComponent implements OnInit, OnDestroy{
   @ViewChild(CanvasComponent) canvasComponent!: CanvasComponent;
   @ViewChild(MatStepper) private stepper!: MatStepper;
   protected vm$ = this.store.vm$;
