@@ -62,11 +62,25 @@ export class OfsMessageService {
     this.sendPostMessageData(message);
   }
 
-  close(additionalData: Partial<Message> = {}): void {
+/*  close(additionalData: Partial<Message> = {}): void {
     const message: Partial<Message> = {
       ...additionalData,
       apiVersion: OfsMessageService.API_VERSION,
       method: 'close'
+    };
+    this.sendPostMessageData(message);
+  }*/
+
+  close(activityId: number): void {
+    let today = new Date();
+    const message = {
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'close',
+      backScreen: 'activity_list',
+      activity: {
+        "aid": activityId,
+        "XA_ACTION_CODE_205": today
+      }
     };
     this.sendPostMessageData(message);
   }
@@ -90,14 +104,14 @@ export class OfsMessageService {
     this.sendPostMessageData(message);
   }*/
 
-  closeAndUpdate(signatureValid: boolean) {
+/*  closeAndUpdate(signatureValid: boolean) {
     const message: Partial<Message> = {
       apiVersion: OfsMessageService.API_VERSION,
       method: 'close',
-      /*activity: { XA_SIGN_VALID: signatureValid }*/
+      /!*activity: { XA_SIGN_VALID: signatureValid }*!/
     };
     this.sendPostMessageData(message);
-  }
+  }*/
 
   sleep(additionalData: Partial<Message> = {}): void {
     const message: Partial<Message> = {
@@ -194,7 +208,7 @@ export class OfsMessageService {
   pluginOpen(message: any) {
     this.messageSubject.next(message);
     this.messageSubject.complete();
-    console.log(message);
+    /*console.log(message);*/
   }
 
   // close() {

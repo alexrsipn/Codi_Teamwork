@@ -90,7 +90,8 @@ export class CompleteComponent implements OnInit, OnDestroy{
       // Others
       const otherCtrl = this.secondFormGroup.get('othersCtrl');
       if (vm.othersVisibilitySettings) {
-        otherCtrl?.setValidators(Validators.required);
+        /*otherCtrl?.setValidators(Validators.required);*/
+        otherCtrl?.clearValidators();
       } else {
         otherCtrl?.clearValidators();
         otherCtrl?.setValue('');

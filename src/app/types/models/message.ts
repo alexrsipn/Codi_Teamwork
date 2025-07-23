@@ -16,6 +16,7 @@ export interface Message {
   allowedProcedures: AllowedProcedures;
   sendMessageAsJsObject?: boolean;
   sendInitData?: boolean;
+  backScreen?: string;
 }
 
 export interface Activity {
@@ -26,6 +27,7 @@ export interface Activity {
   XA_MAGIC_TOWN_FLAG: string,
   XA_MST_ACT: string,
   XA_QUALITY_JOB: string,
+  XA_PROVISIONING_VALIDATION: string,
   appt_number: string,
   aworktype: string,
   aid: number,

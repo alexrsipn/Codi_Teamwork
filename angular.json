@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Pgn-Sky-Actividad-base": {
+    "Pgn-Izzi-SignatureComplexity": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/pgn-sky-actividad-base",
+            "outputPath": "dist/pgn-izzi-signature-complexity",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -40,8 +40,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumWarning": "1500kb",
+                  "maximumError": "2mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -63,10 +63,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Pgn-Sky-Actividad-base:build:production"
+              "buildTarget": "Pgn-Izzi-SignatureComplexity:build:production"
             },
             "development": {
-              "buildTarget": "Pgn-Sky-Actividad-base:build:development"
+              "buildTarget": "Pgn-Izzi-SignatureComplexity:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -74,7 +74,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "Pgn-Sky-Actividad-base:build"
+            "buildTarget": "Pgn-Izzi-SignatureComplexity:build"
           }
         },
         "test": {

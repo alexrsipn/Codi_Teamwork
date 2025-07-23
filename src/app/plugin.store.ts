@@ -9,7 +9,7 @@ import Image from 'image-js';
 import { DialogService } from "./services/dialog.service";
 import { HttpErrorResponse } from "@angular/common/http";
 import { SurveyData } from "./types/plugin-types";
-import { UpdateAnActivityBodyParams } from "./types/ofs-rest-api";
+import {GetAResourceRoute, GetAResourceRouteItem, UpdateAnActivityBodyParams} from "./types/ofs-rest-api";
 
 interface State {
   activityId?: number | string;
@@ -20,6 +20,7 @@ interface State {
   qualityJob?: string;
   apptNumber?: string;
   aworkType?: string;
+  provisioningValidation?: string;
   clientSignature?: Blob | null;
   clientSignatureHandled?: Image | null;
   technicianSignature?: Blob | null;
@@ -30,6 +31,7 @@ interface State {
   tcSectionVisibilitySettings: boolean;
   clientSignVisibilitySettings: boolean;
   othersVisibilitySettings: boolean;
+  stepperVisibility: boolean;
   byPassClientSignature: number;
 }
 
@@ -39,6 +41,7 @@ const initialState = {
   tcSectionVisibilitySettings: false,
   clientSignVisibilitySettings: false,
   othersVisibilitySettings: false,
+  stepperVisibility: false,
   byPassClientSignature: 0
 };
 
@@ -72,9 +75,24 @@ export class Store extends ComponentStore<State> {
       qualityJob: message.activity.XA_QUALITY_JOB,
       apptNumber: message.activity.appt_number,
       aworkType: message.activity.aworktype,
+      provisioningValidation: message.activity.XA_PROVISIONING_VALIDATION,
       byPassClientSignature: message.activity.XA_CLIENTSIGN_OVER === '1' ? 1 : 0
     };
   });
+  readonly setFromOfsApi = this.updater((state, response: GetAResourceRouteItem[]) => {
+    return {
+      ...state,
+      activityId: response[0].activityId,
+      accountType: response[0].XA_ACCOUNTTYPE,
+      jobType: response[0].XA_JOBTYPE,
+      magicTownFlag: response[0].XA_MAGIC_TOWN_FLAG,
+      masterFlag: response[0].XA_MST_ACT,
+      qualityJob: response[0].XA_QUALITY_JOB,
+      apptNumber: response[0].apptNumber,
+      aworkType: response[0].activityType,
+      byPassClientSignature: response[0].XA_CLIENTSIGN_OVER === '1' ? 1 : 0
+    }
+  })
   readonly setClientSignature = this.updater<Blob>(
     (state, clientSignature) => ({
       ...state,
@@ -121,23 +139,45 @@ export class Store extends ComponentStore<State> {
     ...state,
     othersVisibilitySettings
   }));
+  readonly setStepperVisibilitySettings = this.updater((state, stepperVisibility: boolean) => ({
+    ...state,
+    stepperVisibility
+  }));
 
   // Effects
   private readonly handleOpenMessage = this.effect<Message>(($) =>
     $.pipe(
-      tap((message) => {
-        this.setFromOfsMessage(message);
-      }),
       tap(({securedData}) => {
-        const {ofscRestClientId, ofscRestSecretId, urlOFSC, parametroComplejidad} = securedData;
-        const { byPassClientSignature } = this.get();
+        const {ofscRestClientId, ofscRestSecretId, urlOFSC} = securedData;
         this.ofsRestApiService.setUrl(urlOFSC);
         this.ofsRestApiService.setCredentials({user: ofscRestClientId, pass: ofscRestSecretId});
-        const complexityGrade = byPassClientSignature === 1 ? 0 : Number(parametroComplejidad);
-        this.setComplexity(complexityGrade);
-        this.imageAnalyzer.setComplexityGrade(complexityGrade);
       }),
-      concatMap(() => this.ofsRestApiService.getAnActivityType(this.get().aworkType!)),
+      concatMap((message) => {
+        if (message.activity) {
+          this.setFromOfsMessage(message);
+          const { parametroComplejidad } = message.securedData;
+          const { byPassClientSignature } = this.get();
+          const complexityGrade = byPassClientSignature === 1 ? 0 : Number(parametroComplejidad);
+          this.setComplexity(complexityGrade);
+          this.imageAnalyzer.setComplexityGrade(complexityGrade);
+          return from(Promise.resolve());
+        } else {
+          const resourceId = message.resource.external_id;
+          const routeDate = message.queue.date;
+          const { parametroComplejidad } = message.securedData;
+          return this.ofsRestApiService.getAResourceRoute(resourceId, routeDate).pipe(
+            map((response: GetAResourceRoute) => response.items.filter((item: GetAResourceRouteItem) => item.status === 'started')),
+            tap((messageData) => this.setFromOfsApi(messageData)),
+            tap(() => {
+              const { byPassClientSignature } = this.get();
+              const complexityGrade = byPassClientSignature === 1 ? 0 : Number(parametroComplejidad);
+              this.setComplexity(complexityGrade);
+              this.imageAnalyzer.setComplexityGrade(complexityGrade);
+            })
+          );
+        }
+      }),
+      switchMap(() => this.ofsRestApiService.getAnActivityType(this.get().aworkType!)),
       tap(({groupLabel}) => this.visibilitySettings(groupLabel!)),
     )
   );
@@ -198,10 +238,11 @@ export class Store extends ComponentStore<State> {
 
   readonly completeActivity = this.effect<SurveyData>($ => $.pipe(
     map((survey: SurveyData) => this.handleSurvey(survey)),
-    concatMap((params) => this.ofsRestApiService.updateAnActivity(Number(this.get().activityId), params)),
+    tap(survey => console.log(Object.keys(survey).length)),
+    concatMap((params) => Object.keys(params).length > 0 ? from(this.ofsRestApiService.updateAnActivity(Number(this.get().activityId), params)) : Promise.resolve()),
     delay(300),
     switchMap(() => this.ofsRestApiService.completeAnActivity(Number(this.get().activityId))),
-    tap(() => this.ofs.close({}))
+    tap(() => this.ofs.close(Number(this.get().activityId)))
   ));
 
 
@@ -223,9 +264,10 @@ export class Store extends ComponentStore<State> {
   }
 
   private visibilitySettings(aworkTypeGroup: string) {
-    const {magicTownFlag, accountType, jobType} = this.get();
-    let jobTypeSignCatalog = ['TC061','TC062','TC063','TC072','TC062','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];
-    let jobTypeOthersCatalog = ['TC061','TC062','TC063','TC072','TC062','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216','TC224'];
+    const {magicTownFlag, accountType, jobType, provisioningValidation} = this.get();
+    let jobTypeSignCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];
+    let jobTypeOthersCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216','TC224'];
+    let jobTypeInternalCatalog = ['TC061','TC072','TC062','TC063','TC108','TC126','TC131','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];
     let aworkTypeGroupTCValidation = aworkTypeGroup.includes('GTC'); // activity.`aworktype_group` IN ('GTC')
     let magicTownTCValidation = magicTownFlag !== '1'; // NOT activity.`XA_MAGIC_TOWN_FLAG` IN ('1')
     let accountTypeValidation = accountType === 'Residencial'; // activity.`XA_ACCOUNTTYPE` IN ('Residencial')
@@ -241,5 +283,9 @@ export class Store extends ComponentStore<State> {
     let accountTypeOthersValidation = accountType === 'Residencial' || !accountType;
     let othersVisibilitySettings = aworkTypeOthersValidation && jobTypeOthersValidation && magicTownOthersValidation && accountTypeOthersValidation;
     this.setOthersVisibilitySettings(othersVisibilitySettings);
+    let jobTypeStepperValidation = jobTypeInternalCatalog.includes(jobType!);
+    let provisioningVal = provisioningValidation === 'OK';
+    let stepperVisibilitySettings = jobTypeStepperValidation && provisioningVal;
+    this.setStepperVisibilitySettings(stepperVisibilitySettings);
   }
 }

@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {GetAnActivityTypeResponse, UpdateAnActivityBodyParams} from "../types/ofs-rest-api";
 
@@ -28,6 +28,15 @@ export class OfsRestApiService {
       'Content-Type': 'image/png',
     });
     return this.http.put<any>(endpoint, file, {headers: headers});
+  }
+
+  getAResourceRoute (resourceId: string, date: string) {
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/resources/${resourceId}/routes/${date}`;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'application/json',
+    });
+    return this.http.get<any>(endpoint, {headers: headers});
   }
 
   updateAnActivity(activityId: number, bodyParams: UpdateAnActivityBodyParams) {

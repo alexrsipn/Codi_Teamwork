@@ -21,3 +21,25 @@ export interface UpdateAnActivityBodyParams {
   XA_SERV_TEL?: number,
   XA_OTHER_COMMENTS?: string
 }
+
+
+export interface GetAResourceRoute {
+  routeStartTime: string,
+  totalResults: number,
+  limit: number,
+  offset: number,
+  items: GetAResourceRouteItem[]
+}
+
+export interface GetAResourceRouteItem {
+  activityId?: number,
+  XA_ACCOUNTTYPE?: string,
+  XA_JOBTYPE?: string,
+  XA_MAGIC_TOWN_FLAG?: string,
+  XA_MST_ACT?: string,
+  apptNumber?: string,
+  activityType?: string,
+  XA_CLIENTSIGN_OVER?: string,
+  XA_QUALITY_JOB?: string,
+  status?: string
+}
