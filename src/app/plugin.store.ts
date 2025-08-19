@@ -20,6 +20,7 @@ interface State {
   qualityJob?: string;
   apptNumber?: string;
   aworkType?: string;
+  solutionCode?: string;
   provisioningValidation?: string;
   clientSignature?: Blob | null;
   clientSignatureHandled?: Image | null;
@@ -75,6 +76,7 @@ export class Store extends ComponentStore<State> {
       qualityJob: message.activity.XA_QUALITY_JOB,
       apptNumber: message.activity.appt_number,
       aworkType: message.activity.aworktype,
+      solutionCode: message.activity.XA_SOLUTIONCODE,
       provisioningValidation: message.activity.XA_PROVISIONING_VALIDATION,
       byPassClientSignature: message.activity.XA_CLIENTSIGN_OVER === '1' ? 1 : 0
     };
@@ -153,6 +155,7 @@ export class Store extends ComponentStore<State> {
         this.ofsRestApiService.setCredentials({user: ofscRestClientId, pass: ofscRestSecretId});
       }),
       concatMap((message) => {
+        console.log(message);
         if (message.activity) {
           this.setFromOfsMessage(message);
           const { parametroComplejidad } = message.securedData;
@@ -264,28 +267,30 @@ export class Store extends ComponentStore<State> {
   }
 
   private visibilitySettings(aworkTypeGroup: string) {
-    const {magicTownFlag, accountType, jobType, provisioningValidation} = this.get();
-    let jobTypeSignCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];
-    let jobTypeOthersCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216','TC224'];
-    let jobTypeInternalCatalog = ['TC061','TC072','TC062','TC063','TC108','TC126','TC131','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];
-    let aworkTypeGroupTCValidation = aworkTypeGroup.includes('GTC'); // activity.`aworktype_group` IN ('GTC')
+    const {magicTownFlag, accountType, jobType, provisioningValidation, solutionCode} = this.get();
+    /*let jobTypeCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];*/
+    /*let jobTypeOthersCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216','TC224'];*/
+    /*let jobTypeInternalCatalog = ['TC061','TC072','TC062','TC063','TC108','TC126','TC131','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];*/
+    const jobTypeExceptionsCatalog = ['TC032','TC034','TC052','TC061','TC062','TC063','TC071','TC072','TC098','TC108','TC116','TC126','TC132','TC151','TC157','TC163','TC169','TC179','TC180','TC181','TC182','TC213','TC214','TC215','TC216','TC217','TC218','TC219','TC220'];
+
+    let aworkTypeGroupTCValidation = aworkTypeGroup.includes('GTC') || solutionCode !== undefined; // activity.`aworktype_group` IN ('GTC')
     let magicTownTCValidation = magicTownFlag !== '1'; // NOT activity.`XA_MAGIC_TOWN_FLAG` IN ('1')
     let accountTypeValidation = accountType === 'Residencial'; // activity.`XA_ACCOUNTTYPE` IN ('Residencial')
     let tcSectionValidation = aworkTypeGroupTCValidation && magicTownTCValidation && accountTypeValidation;
     this.setTcSectionVisibilitySettings(tcSectionValidation);
-    let jobTypeSignValidation = !jobTypeSignCatalog.includes(jobType!);
+    let jobTypeSignValidation = jobTypeExceptionsCatalog.includes(jobType!);
     let aworkTypeSignValidation = aworkTypeGroup.includes('customer') || aworkTypeGroup.includes('GTC');
-    let clientSignatureVisibilitySettings = jobTypeSignValidation && aworkTypeSignValidation;
+    let clientSignatureVisibilitySettings = !jobTypeSignValidation && aworkTypeSignValidation;
     this.setClientSignVisibilitySettings(clientSignatureVisibilitySettings);
     let aworkTypeOthersValidation = aworkTypeGroup.includes('customer');
-    let jobTypeOthersValidation = !jobTypeOthersCatalog.includes(jobType!);
+    let jobTypeOthersValidation = jobTypeExceptionsCatalog.includes(jobType!);
     let magicTownOthersValidation = magicTownFlag !== '1';
     let accountTypeOthersValidation = accountType === 'Residencial' || !accountType;
-    let othersVisibilitySettings = aworkTypeOthersValidation && jobTypeOthersValidation && magicTownOthersValidation && accountTypeOthersValidation;
+    let othersVisibilitySettings = aworkTypeOthersValidation && !jobTypeOthersValidation && magicTownOthersValidation && accountTypeOthersValidation;
     this.setOthersVisibilitySettings(othersVisibilitySettings);
-    let jobTypeStepperValidation = jobTypeInternalCatalog.includes(jobType!);
+    let jobTypeStepperValidation = jobTypeExceptionsCatalog.includes(jobType!);
     let provisioningVal = provisioningValidation === 'OK';
-    let stepperVisibilitySettings = jobTypeStepperValidation && provisioningVal;
-    this.setStepperVisibilitySettings(stepperVisibilitySettings);
+    let onlySignVisibilitySetting = jobTypeStepperValidation && provisioningVal;
+    this.setStepperVisibilitySettings(onlySignVisibilitySetting);
   }
 }

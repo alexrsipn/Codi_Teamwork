@@ -1,7 +1,7 @@
 <ng-container *ngIf="vm$ | async as vm">
   <div>
     <h3 style="text-align: center; padding: 0.5rem 0">Orden de trabajo: <b>{{vm.apptNumber}}</b></h3>
-    <ng-container *ngIf="vm.stepperVisibility; else finish">
+    <ng-container *ngIf="!vm.stepperVisibility; else finish">
       <mat-stepper [orientation]="(stepperOrientation | async)!" [linear]="true">
         <mat-step *ngIf="vm.clientSignVisibilitySettings" [stepControl]="firstFormGroup" label="Firma">
           <div>

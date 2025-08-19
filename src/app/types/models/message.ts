@@ -31,6 +31,7 @@ export interface Activity {
   appt_number: string,
   aworktype: string,
   aid: number,
+  XA_SOLUTIONCODE?: string,
 }
 
 export interface Format {
