@@ -41,5 +41,6 @@ export interface GetAResourceRouteItem {
   activityType?: string,
   XA_CLIENTSIGN_OVER?: string,
   XA_QUALITY_JOB?: string,
-  status?: string
+  status?: string,
+  XA_PROVISIONING_VALIDATION?: string
 }

@@ -144,7 +144,7 @@ export class CompleteComponent implements OnInit, OnDestroy{
               this.stepper.next();
             }
           } else {
-            console.log("La firma del cliente no es válida, no se avanzará en el flujo.");
+            /*console.log("La firma del cliente no es válida, no se avanzará en el flujo.");*/
             if (this.firstFormGroup.get('firstCtrl')) {
               this.firstFormGroup.get('firstCtrl')!.setValue('');
               this.firstFormGroup.get('firstCtrl')!.markAsTouched();

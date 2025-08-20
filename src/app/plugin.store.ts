@@ -32,7 +32,7 @@ interface State {
   tcSectionVisibilitySettings: boolean;
   clientSignVisibilitySettings: boolean;
   othersVisibilitySettings: boolean;
-  stepperVisibility: boolean;
+  onlyFinishButtonVisibility: boolean;
   byPassClientSignature: number;
 }
 
@@ -42,7 +42,7 @@ const initialState = {
   tcSectionVisibilitySettings: false,
   clientSignVisibilitySettings: false,
   othersVisibilitySettings: false,
-  stepperVisibility: false,
+  onlyFinishButtonVisibility: false,
   byPassClientSignature: 0
 };
 
@@ -92,6 +92,7 @@ export class Store extends ComponentStore<State> {
       qualityJob: response[0].XA_QUALITY_JOB,
       apptNumber: response[0].apptNumber,
       aworkType: response[0].activityType,
+      provisioningValidation: response[0].XA_PROVISIONING_VALIDATION,
       byPassClientSignature: response[0].XA_CLIENTSIGN_OVER === '1' ? 1 : 0
     }
   })
@@ -141,13 +142,13 @@ export class Store extends ComponentStore<State> {
     ...state,
     othersVisibilitySettings
   }));
-  readonly setStepperVisibilitySettings = this.updater((state, stepperVisibility: boolean) => ({
+  readonly setonlyFinishButtonVisibility = this.updater((state, onlyFinishButtonVisibility: boolean) => ({
     ...state,
-    stepperVisibility
+    onlyFinishButtonVisibility
   }));
 
   // Effects
-  private readonly handleOpenMessage = this.effect<Message>(($) =>
+  readonly handleOpenMessage = this.effect<Message>(($) =>
     $.pipe(
       tap(({securedData}) => {
         const {ofscRestClientId, ofscRestSecretId, urlOFSC} = securedData;
@@ -155,7 +156,6 @@ export class Store extends ComponentStore<State> {
         this.ofsRestApiService.setCredentials({user: ofscRestClientId, pass: ofscRestSecretId});
       }),
       concatMap((message) => {
-        console.log(message);
         if (message.activity) {
           this.setFromOfsMessage(message);
           const { parametroComplejidad } = message.securedData;
@@ -182,6 +182,7 @@ export class Store extends ComponentStore<State> {
       }),
       switchMap(() => this.ofsRestApiService.getAnActivityType(this.get().aworkType!)),
       tap(({groupLabel}) => this.visibilitySettings(groupLabel!)),
+      tap(() => this.get().provisioningValidation !== "OK" && this.dialog.error('Se debe completar el aprovisionamiento para finalizar la actividad'))
     )
   );
   readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(
@@ -274,8 +275,8 @@ export class Store extends ComponentStore<State> {
     const jobTypeExceptionsCatalog = ['TC032','TC034','TC052','TC061','TC062','TC063','TC071','TC072','TC098','TC108','TC116','TC126','TC132','TC151','TC157','TC163','TC169','TC179','TC180','TC181','TC182','TC213','TC214','TC215','TC216','TC217','TC218','TC219','TC220'];
 
     let aworkTypeGroupTCValidation = aworkTypeGroup.includes('GTC') || solutionCode !== undefined; // activity.`aworktype_group` IN ('GTC')
-    let magicTownTCValidation = magicTownFlag !== '1'; // NOT activity.`XA_MAGIC_TOWN_FLAG` IN ('1')
-    let accountTypeValidation = accountType === 'Residencial'; // activity.`XA_ACCOUNTTYPE` IN ('Residencial')
+    let magicTownTCValidation = magicTownFlag ? magicTownFlag !== '1' : false; // NOT activity.`XA_MAGIC_TOWN_FLAG` IN ('1')
+    let accountTypeValidation = accountType ? accountType === 'Residencial' : true; // activity.`XA_ACCOUNTTYPE` IN ('Residencial')
     let tcSectionValidation = aworkTypeGroupTCValidation && magicTownTCValidation && accountTypeValidation;
     this.setTcSectionVisibilitySettings(tcSectionValidation);
     let jobTypeSignValidation = jobTypeExceptionsCatalog.includes(jobType!);
@@ -290,7 +291,7 @@ export class Store extends ComponentStore<State> {
     this.setOthersVisibilitySettings(othersVisibilitySettings);
     let jobTypeStepperValidation = jobTypeExceptionsCatalog.includes(jobType!);
     let provisioningVal = provisioningValidation === 'OK';
-    let onlySignVisibilitySetting = jobTypeStepperValidation && provisioningVal;
-    this.setStepperVisibilitySettings(onlySignVisibilitySetting);
+    let onlyFinishVisibilitySetting = jobTypeStepperValidation && provisioningVal;
+    this.setonlyFinishButtonVisibility(onlyFinishVisibilitySetting);
   }
 }

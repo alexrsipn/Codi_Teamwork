@@ -18,6 +18,6 @@ export class AppComponent {
     private readonly ofs: OfsMessageService,
     private readonly store: Store
   ) {
-    ofs.getMessage().subscribe(this.store.setFromOfsMessage);
+    ofs.getMessage().subscribe(ofs.message);
   }
 }
