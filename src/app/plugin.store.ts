@@ -93,7 +93,7 @@ export class Store extends ComponentStore<State> {
       apptNumber: response[0].apptNumber,
       aworkType: response[0].activityType,
       provisioningValidation: response[0].XA_PROVISIONING_VALIDATION,
-      byPassClientSignature: response[0].XA_CLIENTSIGN_OVER === '1' ? 1 : 0
+      byPassClientSignature: response[0].XA_CLIENTSIGN_OVER === 1 ? 1 : 0
     }
   })
   readonly setClientSignature = this.updater<Blob>(

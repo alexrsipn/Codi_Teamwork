@@ -39,7 +39,7 @@ export interface GetAResourceRouteItem {
   XA_MST_ACT?: string,
   apptNumber?: string,
   activityType?: string,
-  XA_CLIENTSIGN_OVER?: string,
+  XA_CLIENTSIGN_OVER?: string | number,
   XA_QUALITY_JOB?: string,
   status?: string,
   XA_PROVISIONING_VALIDATION?: string
