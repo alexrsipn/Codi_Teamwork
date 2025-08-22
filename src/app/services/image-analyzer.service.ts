@@ -113,7 +113,7 @@ export class ImageAnalyzerService {
         intersectionCount++;
       }
     });
-    console.log(intersectionCount);
+    /*console.log(intersectionCount);*/
     return intersectionCount >= this.currentComplexitySettings!.intersectionCount ? {text: 'Válido', result: true, quality: intersectionCount} : {text: 'No válido', result: false, quality: intersectionCount};
   }
 }

@@ -242,7 +242,7 @@ export class Store extends ComponentStore<State> {
 
   readonly completeActivity = this.effect<SurveyData>($ => $.pipe(
     map((survey: SurveyData) => this.handleSurvey(survey)),
-    tap(survey => console.log(Object.keys(survey).length)),
+    /*tap(survey => console.log(Object.keys(survey).length)),*/
     concatMap((params) => Object.keys(params).length > 0 ? from(this.ofsRestApiService.updateAnActivity(Number(this.get().activityId), params)) : Promise.resolve()),
     delay(300),
     switchMap(() => this.ofsRestApiService.completeAnActivity(Number(this.get().activityId))),
@@ -274,8 +274,8 @@ export class Store extends ComponentStore<State> {
     /*let jobTypeInternalCatalog = ['TC061','TC072','TC062','TC063','TC108','TC126','TC131','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];*/
     const jobTypeExceptionsCatalog = ['TC032','TC034','TC052','TC061','TC062','TC063','TC071','TC072','TC098','TC108','TC116','TC126','TC132','TC151','TC157','TC163','TC169','TC179','TC180','TC181','TC182','TC213','TC214','TC215','TC216','TC217','TC218','TC219','TC220'];
 
-    let aworkTypeGroupTCValidation = aworkTypeGroup.includes('GTC') || solutionCode !== undefined; // activity.`aworktype_group` IN ('GTC')
-    let magicTownTCValidation = magicTownFlag ? magicTownFlag !== '1' : false; // NOT activity.`XA_MAGIC_TOWN_FLAG` IN ('1')
+    let aworkTypeGroupTCValidation = aworkTypeGroup.includes('GTC'); // activity.`aworktype_group` IN ('GTC')
+    let magicTownTCValidation = magicTownFlag?.toString() !== '1'; // NOT activity.`XA_MAGIC_TOWN_FLAG` IN ('1')
     let accountTypeValidation = accountType ? accountType === 'Residencial' : true; // activity.`XA_ACCOUNTTYPE` IN ('Residencial')
     let tcSectionValidation = aworkTypeGroupTCValidation && magicTownTCValidation && accountTypeValidation;
     this.setTcSectionVisibilitySettings(tcSectionValidation);
@@ -285,7 +285,7 @@ export class Store extends ComponentStore<State> {
     this.setClientSignVisibilitySettings(clientSignatureVisibilitySettings);
     let aworkTypeOthersValidation = aworkTypeGroup.includes('customer');
     let jobTypeOthersValidation = jobTypeExceptionsCatalog.includes(jobType!);
-    let magicTownOthersValidation = magicTownFlag !== '1';
+    let magicTownOthersValidation = magicTownFlag?.toString() !== '1';
     let accountTypeOthersValidation = accountType === 'Residencial' || !accountType;
     let othersVisibilitySettings = aworkTypeOthersValidation && !jobTypeOthersValidation && magicTownOthersValidation && accountTypeOthersValidation;
     this.setOthersVisibilitySettings(othersVisibilitySettings);
