@@ -1,0 +1,11 @@
+<ng-container *ngIf="vm$ | async as vm">
+  <div class="content">
+    <p>Id de recurso hijo: {{vm.resourceId}}</p>
+    <p>Id de recurso padre: {{vm.parentResourceId}}</p>
+    <ng-container *ngIf="vm.childResources && vm.childResources.length > 0">
+      <ul *ngFor="let resource of vm.childResources">
+        <li style="list-style: none">{{resource.name}}</li>
+      </ul>
+    </ng-container>
+  </div>
+</ng-container>

@@ -1,19 +1,20 @@
 import { Route } from '@angular/router';
 import { CompleteComponent } from './components/complete/complete.component';
+import {TeamworkComponent} from "./components/teamwork/teamwork.component";
 
 export const ROUTES: Route[] = [
   {
-    path: 'completeActivity',
-    component: CompleteComponent,
+    path: 'codi_teamWork',
+    component: TeamworkComponent,
   },
   {
     path: '',
-    redirectTo: 'completeActivity',
+    redirectTo: 'codi_teamWork',
     pathMatch: 'full',
   },
   {
     path: '*',
-    redirectTo: 'completeActivity',
+    redirectTo: 'codi_teamWork',
     pathMatch: 'full',
   },
 ];

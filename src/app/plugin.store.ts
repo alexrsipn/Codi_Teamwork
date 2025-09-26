@@ -9,7 +9,12 @@ import Image from 'image-js';
 import { DialogService } from "./services/dialog.service";
 import { HttpErrorResponse } from "@angular/common/http";
 import { SurveyData } from "./types/plugin-types";
-import {GetAResourceRoute, GetAResourceRouteItem, UpdateAnActivityBodyParams} from "./types/ofs-rest-api";
+import {
+  GetAResourceResponse,
+  GetAResourceRoute,
+  GetAResourceRouteItem, GetChildResourcesResponse,
+  UpdateAnActivityBodyParams
+} from "./types/ofs-rest-api";
 
 interface State {
   activityId?: number | string;
@@ -34,6 +39,9 @@ interface State {
   othersVisibilitySettings: boolean;
   onlyFinishButtonVisibility: boolean;
   byPassClientSignature: number;
+  resourceId?: string;
+  parentResourceId?: string;
+  childResources?: GetAResourceResponse[];
 }
 
 const initialState = {
@@ -78,7 +86,8 @@ export class Store extends ComponentStore<State> {
       aworkType: message.activity.aworktype,
       solutionCode: message.activity.XA_SOLUTIONCODE,
       provisioningValidation: message.activity.XA_PROVISIONING_VALIDATION,
-      byPassClientSignature: message.activity.XA_CLIENTSIGN_OVER === '1' ? 1 : 0
+      byPassClientSignature: message.activity.XA_CLIENTSIGN_OVER === '1' ? 1 : 0,
+      resourceId: message.resource.external_id
     };
   });
   readonly setFromOfsApi = this.updater((state, response: GetAResourceRouteItem[]) => {
@@ -96,6 +105,18 @@ export class Store extends ComponentStore<State> {
       byPassClientSignature: response[0].XA_CLIENTSIGN_OVER === 1 ? 1 : 0
     }
   })
+  readonly setResourceChild = this.updater<GetAResourceResponse>((state, resource) => {
+    return {
+      ...state,
+      parentResourceId: resource.parentResourceId,
+    }
+  });
+  readonly setChildResources = this.updater<GetChildResourcesResponse>((state, childResources) => {
+    return {
+      ...state,
+      childResources: childResources.items
+    }
+  });
   readonly setClientSignature = this.updater<Blob>(
     (state, clientSignature) => ({
       ...state,
@@ -155,16 +176,17 @@ export class Store extends ComponentStore<State> {
         this.ofsRestApiService.setUrl(urlOFSC);
         this.ofsRestApiService.setCredentials({user: ofscRestClientId, pass: ofscRestSecretId});
       }),
-      concatMap((message) => {
-        if (message.activity) {
-          this.setFromOfsMessage(message);
-          const { parametroComplejidad } = message.securedData;
+      tap((message) => {
+        /*if (message.activity) {*/
+        console.log(message);
+        this.setFromOfsMessage(message);
+          /*const { parametroComplejidad } = message.securedData;
           const { byPassClientSignature } = this.get();
           const complexityGrade = byPassClientSignature === 1 ? 0 : Number(parametroComplejidad);
           this.setComplexity(complexityGrade);
-          this.imageAnalyzer.setComplexityGrade(complexityGrade);
-          return from(Promise.resolve());
-        } else {
+          this.imageAnalyzer.setComplexityGrade(complexityGrade);*/
+          /*return from(Promise.resolve());*/
+        /*} else {
           const resourceId = message.resource.external_id;
           const routeDate = message.queue.date;
           const { parametroComplejidad } = message.securedData;
@@ -178,11 +200,15 @@ export class Store extends ComponentStore<State> {
               this.imageAnalyzer.setComplexityGrade(complexityGrade);
             })
           );
-        }
+        }*/
       }),
-      switchMap(() => this.ofsRestApiService.getAnActivityType(this.get().aworkType!)),
+      concatMap(() => this.ofsRestApiService.getAResource(this.get().resourceId!)),
+      tap(resource => this.setResourceChild(resource)),
+      switchMap((resourcesChild) => this.ofsRestApiService.getChildResources(resourcesChild.parentResourceId)),
+      tap(parentResourceData => this.setChildResources(parentResourceData))
+      /*switchMap(() => this.ofsRestApiService.getAnActivityType(this.get().aworkType!)),
       tap(({groupLabel}) => this.visibilitySettings(groupLabel!)),
-      tap(() => this.get().provisioningValidation !== "OK" && this.dialog.error('Se debe completar el aprovisionamiento para finalizar la actividad'))
+      tap(() => this.get().provisioningValidation !== "OK" && this.dialog.error('Se debe completar el aprovisionamiento para finalizar la actividad'))*/
     )
   );
   readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(

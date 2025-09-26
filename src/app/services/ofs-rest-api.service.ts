@@ -1,6 +1,11 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {GetAnActivityTypeResponse, UpdateAnActivityBodyParams} from "../types/ofs-rest-api";
+import {
+  GetAnActivityTypeResponse,
+  GetAResourceResponse,
+  GetChildResourcesResponse,
+  UpdateAnActivityBodyParams
+} from "../types/ofs-rest-api";
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +24,24 @@ export class OfsRestApiService {
   setCredentials(credentials: {user: string; pass: string}) {
     this.credentials = credentials;
     return this;
+  }
+
+  getAResource(resourceId: string) {
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/resources/${resourceId}?identifyResourceBy=resourceId`;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'application/json',
+    })
+    return this.http.get<GetAResourceResponse>(endpoint, {headers: headers});
+  }
+
+  getChildResources(resourceId: string) {
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/resources/${resourceId}/children?fields=resourceId,status,name,resourceType`;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
+      'Content-Type': 'application/json',
+    });
+    return this.http.get<GetChildResourcesResponse>(endpoint, {headers: headers});
   }
 
   setAFileProperty(activityId: string, propertyLabel: string, file: Blob) {

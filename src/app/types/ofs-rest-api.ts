@@ -1,3 +1,26 @@
+export interface GetAResourceResponse {
+  resourceId: string,
+  organization: string,
+  status: string,
+  parentResourceId: string,
+  resourceType: string,
+  name?: string,
+  inventories: any,
+  users: any,
+  workZones: any,
+  workSkills: any,
+  workSchedules: any,
+  links: any[]
+}
+
+export interface GetChildResourcesResponse {
+  items: GetAResourceResponse[],
+  limit: number,
+  links: any[],
+  offset: number,
+  totalResults: number
+}
+
 export interface GetAnActivityTypeResponse {
   active: boolean,
   colors?: object,
