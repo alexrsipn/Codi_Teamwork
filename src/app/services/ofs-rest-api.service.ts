@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
   GetAnActivityTypeResponse,
@@ -6,24 +6,56 @@ import {
   GetChildResourcesResponse,
   UpdateAnActivityBodyParams
 } from "../types/ofs-rest-api";
+import {awsTokenResponse, tecnicosAdicionalesRequest} from "../types/aws";
 
 @Injectable({
   providedIn: 'root'
 })
 export class OfsRestApiService {
   credentials: {user: string; pass: string} = {user: '', pass: ''};
+  awsCredentials: {user: string, pass: string, awsUrlToken: string} = {user: '', pass: '', awsUrlToken: ''};
   baseUrl = '';
+  awsToken = '';
+  awsUrlTechnicians = '';
 
   constructor(private readonly http: HttpClient) { }
 
-  setUrl(url: string) {
+  setOfsUrl(url: string) {
     this.baseUrl = url;
     return this;
   }
 
-  setCredentials(credentials: {user: string; pass: string}) {
+  setAwsUrlTechnicians(url: string) {
+    this.awsUrlTechnicians = url;
+    return this;
+  }
+
+  setOfsCredentials(credentials: {user: string; pass: string}) {
     this.credentials = credentials;
     return this;
+  }
+
+  setAWSCredentials(awsCredentials: {user: string, pass: string, awsUrlToken: string}) {
+    this.awsCredentials = awsCredentials;
+    return this;
+  }
+
+  setAwsToken(token: string) {
+    this.awsToken = token;
+    return this;
+  }
+
+  getAwsToken() {
+    const endpoint = this.awsCredentials.awsUrlToken;
+    const headers = new HttpHeaders({
+      Authorization: 'Basic ' + btoa(`${this.awsCredentials.user}:${this.awsCredentials.pass}`),
+      'Content-Type': 'application/json',
+    });
+    const body = {
+      "username": this.awsCredentials.user,
+      "password": this.awsCredentials.pass
+    };
+    return this.http.post<awsTokenResponse>(endpoint, body, {headers: headers});
   }
 
   getAResource(resourceId: string) {
@@ -42,6 +74,15 @@ export class OfsRestApiService {
       'Content-Type': 'application/json',
     });
     return this.http.get<GetChildResourcesResponse>(endpoint, {headers: headers});
+  }
+
+  incidentSendAdditionalTech(bodyParams: tecnicosAdicionalesRequest) {
+    const endpoint = this.awsUrlTechnicians;
+    const headers = new HttpHeaders({
+      Authorization: this.awsToken,
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<any>(endpoint, bodyParams, {headers: headers})
   }
 
   setAFileProperty(activityId: string, propertyLabel: string, file: Blob) {

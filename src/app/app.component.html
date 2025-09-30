@@ -1,0 +1,13 @@
+<app-spinner />
+@if (store.vm$ | async; as vm) {
+  <main class="h-screen w-screen max-h-screen">
+    <section class="w-full h-[90%]">
+      <router-outlet></router-outlet>
+    </section>
+    <footer class="flex justify-center items-center">
+      <button class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-950 font-medium" (click)="store.sendCloseMessage({})">
+        Regresar
+      </button>
+    </footer>
+  </main>
+}

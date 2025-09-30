@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import { catchError, concatMap, delay, EMPTY, from, map, switchMap, tap, throwError } from 'rxjs';
+import {catchError, concatMap, delay, EMPTY, filter, finalize, from, map, switchMap, tap, throwError} from 'rxjs';
 import { OfsMessageService } from './services/ofs-message.service';
 import { Message } from './types/models/message';
 import { OfsRestApiService } from './services/ofs-rest-api.service';
@@ -15,8 +15,11 @@ import {
   GetAResourceRouteItem, GetChildResourcesResponse,
   UpdateAnActivityBodyParams
 } from "./types/ofs-rest-api";
+import {SpinnerService} from "./services/spinner.service";
+import {tecnicosAdicionalesRequest} from "./types/aws";
 
 interface State {
+  isLoading: boolean;
   activityId?: number | string;
   accountType?: string;
   jobType?: string;
@@ -42,16 +45,21 @@ interface State {
   resourceId?: string;
   parentResourceId?: string;
   childResources?: GetAResourceResponse[];
+  selectedTechnicians: GetAResourceResponse[];
+  requiredAdditionals: boolean;
 }
 
 const initialState = {
+  isLoading: false,
   complexity: 1,
   clientSignatureResult: undefined,
   tcSectionVisibilitySettings: false,
   clientSignVisibilitySettings: false,
   othersVisibilitySettings: false,
   onlyFinishButtonVisibility: false,
-  byPassClientSignature: 0
+  byPassClientSignature: 0,
+  selectedTechnicians: [],
+  requiredAdditionals: false,
 };
 
 @Injectable({
@@ -63,6 +71,7 @@ export class Store extends ComponentStore<State> {
     private readonly ofsRestApiService: OfsRestApiService,
     private readonly imageAnalyzer: ImageAnalyzerService,
     private readonly dialog: DialogService,
+    private readonly spinner: SpinnerService
   ) {
     super(initialState);
     this.handleOpenMessage(this.ofs.openMessage$);
@@ -104,19 +113,37 @@ export class Store extends ComponentStore<State> {
       provisioningValidation: response[0].XA_PROVISIONING_VALIDATION,
       byPassClientSignature: response[0].XA_CLIENTSIGN_OVER === 1 ? 1 : 0
     }
-  })
+  });
+  readonly setIsLoading = this.updater<boolean>((state, isLoading) => {
+    return {
+      ...state,
+      isLoading,
+    };
+  });
+  readonly setRequiredAdditionals = this.updater<boolean>((state, requiredAdditionals) => {
+    return {
+      ...state,
+      requiredAdditionals
+    }
+  });
   readonly setResourceChild = this.updater<GetAResourceResponse>((state, resource) => {
     return {
       ...state,
       parentResourceId: resource.parentResourceId,
     }
   });
-  readonly setChildResources = this.updater<GetChildResourcesResponse>((state, childResources) => {
+  readonly setChildResources = this.updater<GetAResourceResponse[]>((state, childResources) => {
     return {
       ...state,
-      childResources: childResources.items
+      childResources: childResources
     }
   });
+  readonly setSelectedTechnicians = this.updater<GetAResourceResponse[]>((state, selectedTechnicians) => {
+    return {
+      ...state,
+      selectedTechnicians
+    }
+  })
   readonly setClientSignature = this.updater<Blob>(
     (state, clientSignature) => ({
       ...state,
@@ -171,46 +198,52 @@ export class Store extends ComponentStore<State> {
   // Effects
   readonly handleOpenMessage = this.effect<Message>(($) =>
     $.pipe(
+      /*tap(() => this.spinner.show()),*/
       tap(({securedData}) => {
-        const {ofscRestClientId, ofscRestSecretId, urlOFSC} = securedData;
-        this.ofsRestApiService.setUrl(urlOFSC);
-        this.ofsRestApiService.setCredentials({user: ofscRestClientId, pass: ofscRestSecretId});
+        const {ofscRestClientId, ofscRestSecretId, urlOFSC, urlAWSTechnicians, userAWS, passAWS, urlAWSToken} = securedData;
+        this.ofsRestApiService.setOfsUrl(urlOFSC);
+        this.ofsRestApiService.setOfsCredentials({user: ofscRestClientId, pass: ofscRestSecretId});
+        this.ofsRestApiService.setAWSCredentials({user: userAWS, pass: passAWS, awsUrlToken: urlAWSToken});
+        this.ofsRestApiService.setAwsUrlTechnicians(urlAWSTechnicians);
       }),
-      tap((message) => {
-        /*if (message.activity) {*/
-        console.log(message);
-        this.setFromOfsMessage(message);
-          /*const { parametroComplejidad } = message.securedData;
-          const { byPassClientSignature } = this.get();
-          const complexityGrade = byPassClientSignature === 1 ? 0 : Number(parametroComplejidad);
-          this.setComplexity(complexityGrade);
-          this.imageAnalyzer.setComplexityGrade(complexityGrade);*/
-          /*return from(Promise.resolve());*/
-        /*} else {
-          const resourceId = message.resource.external_id;
-          const routeDate = message.queue.date;
-          const { parametroComplejidad } = message.securedData;
-          return this.ofsRestApiService.getAResourceRoute(resourceId, routeDate).pipe(
-            map((response: GetAResourceRoute) => response.items.filter((item: GetAResourceRouteItem) => item.status === 'started')),
-            tap((messageData) => this.setFromOfsApi(messageData)),
-            tap(() => {
-              const { byPassClientSignature } = this.get();
-              const complexityGrade = byPassClientSignature === 1 ? 0 : Number(parametroComplejidad);
-              this.setComplexity(complexityGrade);
-              this.imageAnalyzer.setComplexityGrade(complexityGrade);
-            })
-          );
-        }*/
-      }),
-      concatMap(() => this.ofsRestApiService.getAResource(this.get().resourceId!)),
+      tap((message) => this.setFromOfsMessage(message)),
+      switchMap(() => this.ofsRestApiService.getAResource(this.get().resourceId!)),
       tap(resource => this.setResourceChild(resource)),
       switchMap((resourcesChild) => this.ofsRestApiService.getChildResources(resourcesChild.parentResourceId)),
-      tap(parentResourceData => this.setChildResources(parentResourceData))
-      /*switchMap(() => this.ofsRestApiService.getAnActivityType(this.get().aworkType!)),
-      tap(({groupLabel}) => this.visibilitySettings(groupLabel!)),
-      tap(() => this.get().provisioningValidation !== "OK" && this.dialog.error('Se debe completar el aprovisionamiento para finalizar la actividad'))*/
+      tap((parentResourceData) => this.handleChildResources(parentResourceData)),
+      switchMap(() => this.dialog.confirm("Técnicos adicionales", "¿Participaron más técnicos en la incidencia?")),
+      tap((userConfirmed) => {
+        if (!userConfirmed!) {
+          this.ofs.closeAndRedirect(Number(this.get().activityId));
+        }
+        this.setRequiredAdditionals(userConfirmed!);
+      }),
+      filter((userConfirmed) => !!userConfirmed!),
+/*      tap({
+        complete: () => this.spinner.hide()
+      }),*/
+      /*finalize(() => this.spinner.hide())*/
     )
   );
+  readonly sendTechnicians = this.effect($ => $.pipe(
+    concatMap(() => this.dialog.confirm("Confirmar técnicos adicionales", `¿Estás seguro de agregar ${this.get().selectedTechnicians.length} técnicos adicionales?`)),
+    concatMap((result) => result! ? Promise.resolve() : EMPTY),
+    /*tap(() => this.spinner.show()),*/
+    switchMap(() => this.ofsRestApiService.getAwsToken()),
+    tap((response) => response.status === 200 && this.ofsRestApiService.setAwsToken(response.token)),
+    map(() => this.handleTechniciansToSend()),
+    concatMap((bodyParams) => this.ofsRestApiService.incidentSendAdditionalTech(bodyParams)),
+    map(() => {
+      const {selectedTechnicians} = this.get();
+      return selectedTechnicians.map(technician => technician.name).join('\n');
+    }),
+    switchMap((technicians) => this.ofsRestApiService.updateAnActivity(Number(this.get().activityId!), {
+      XA_CODI_FLAG_TEC_ADI: this.get().requiredAdditionals ? 1 : 0,
+      XA_CODI_TEC_ADI: technicians
+    })),
+    tap(() => this.ofs.closeAndRedirect(Number(this.get().activityId!))),
+    /*finalize(() => this.spinner.hide())*/
+  ));
   readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(
     tap(() => this.setClientSignatureResult(undefined)),
     tap((blob) => this.setClientSignature(blob)),
@@ -272,9 +305,28 @@ export class Store extends ComponentStore<State> {
     concatMap((params) => Object.keys(params).length > 0 ? from(this.ofsRestApiService.updateAnActivity(Number(this.get().activityId), params)) : Promise.resolve()),
     delay(300),
     switchMap(() => this.ofsRestApiService.completeAnActivity(Number(this.get().activityId))),
-    tap(() => this.ofs.close(Number(this.get().activityId)))
+    /*tap(() => this.ofs.closeAndUpdate(Number(this.get().activityId)))*/
   ));
 
+  private handleChildResources(parentResourceData: GetChildResourcesResponse) {
+    const {resourceId} = this.get();
+    const resources = parentResourceData.items.filter(resource => resource.resourceId !== resourceId && resource.resourceType === 'TEC');
+    this.setChildResources(resources);
+  }
+
+  private handleTechniciansToSend(): tecnicosAdicionalesRequest {
+    const {selectedTechnicians, apptNumber} = this.get();
+    const technicians = selectedTechnicians.map(technician => {
+      return {
+        "idtecnico": technician.resourceId,
+        "nombre": technician.name!
+      }
+    });
+    return {
+      "apptnumber": apptNumber!,
+      "technician": technicians
+    };
+  }
 
   private handleSurvey(rawSurvey: SurveyData): UpdateAnActivityBodyParams {
     const params: Partial<UpdateAnActivityBodyParams> = {}
@@ -319,5 +371,9 @@ export class Store extends ComponentStore<State> {
     let provisioningVal = provisioningValidation === 'OK';
     let onlyFinishVisibilitySetting = jobTypeStepperValidation && provisioningVal;
     this.setonlyFinishButtonVisibility(onlyFinishVisibilitySetting);
+  }
+
+  public sendCloseMessage(additionalData: Partial<Message>) {
+    this.ofs.close(additionalData);
   }
 }

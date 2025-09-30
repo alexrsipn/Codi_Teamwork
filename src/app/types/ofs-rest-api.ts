@@ -42,7 +42,9 @@ export interface UpdateAnActivityBodyParams {
   XA_SERV_INTERNET?: number,
   XA_SERV_TV?: number,
   XA_SERV_TEL?: number,
-  XA_OTHER_COMMENTS?: string
+  XA_OTHER_COMMENTS?: string,
+  XA_CODI_FLAG_TEC_ADI?: number,
+  XA_CODI_TEC_ADI?: string,
 }
 
 

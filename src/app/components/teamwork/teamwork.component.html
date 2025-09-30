@@ -1,11 +1,44 @@
 <ng-container *ngIf="vm$ | async as vm">
-  <div class="content">
-    <p>Id de recurso hijo: {{vm.resourceId}}</p>
-    <p>Id de recurso padre: {{vm.parentResourceId}}</p>
-    <ng-container *ngIf="vm.childResources && vm.childResources.length > 0">
-      <ul *ngFor="let resource of vm.childResources">
-        <li style="list-style: none">{{resource.name}}</li>
-      </ul>
+  <div class="w-full h-full flex flex-col justify-evenly items-center">
+    <!--<h2 class="text-2xl font-semibold">Técnicos adicionales</h2>-->
+<!--    <p>Id de recurso hijo: {{vm.resourceId}}</p>
+    <p>Id de recurso padre: {{vm.parentResourceId}}</p>-->
+    <ng-container *ngIf="vm.requiredAdditionals">
+      <div class="w-[90%] h-1/2 max-h-[30vh] flex flex-col justify-start items-center mx-auto py-4 bg-white/80 border rounded-lg overflow-y-auto">
+        <p class="font-medium">Bucket al que perteneces: {{vm.parentResourceId}}</p>
+        <ng-container *ngIf="vm.childResources && vm.childResources.length > 0; else noTechnicians">
+          <div class="max-w-full">
+            <mat-selection-list #techniciansList (selectionChange)="onSelectionChange(techniciansList.selectedOptions.selected)">
+              <mat-list-option *ngFor="let resource of vm.childResources" [value]="resource">
+                {{resource.resourceId}} - {{resource.name}}
+              </mat-list-option>
+            </mat-selection-list>
+          </div>
+        </ng-container>
+        <ng-template #noTechnicians>
+          <p class="text-gray-700">No hay técnicos adicionales en este bucket.</p>
+        </ng-template>
+      </div>
+      <ng-container *ngIf="vm.selectedTechnicians && vm.selectedTechnicians.length > 0; else noSelectedTechnicians" >
+        <div class="w-[90%] h-1/2 max-h-[30vh] flex flex-col justify-start items-center text-slate-50 px-8 py-4 bg-slate-800 border rounded-lg select-none overflow-y-auto">
+          <p class="font-medium">Técnico(s) adicionales seleccionado(s):</p>
+          <p *ngFor="let technician of vm.selectedTechnicians" class="max-w-full font-medium text-left">
+            {{technician.resourceId}} - {{technician.name}}
+          </p>
+        </div>
+      </ng-container>
+      <ng-template #noSelectedTechnicians>
+        <div class="w-[90%] h-1/2 max-h-[30vh] flex flex-col justify-center items-center text-slate-50 px-8 py-4 bg-slate-800 border rounded-lg select-none overflow-y-auto">
+          <p class="text-center font-semibold leading-relaxed">Seleccione los técnicos adicionales que participaron en la incidencia.</p>
+        </div>
+      </ng-template>
+      <div class="flex justify-center items-center">
+        <button
+          class="bg-sky-600 text-white px-4 py-2 rounded hover:bg-sky-700 font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
+          [disabled]="!vm.selectedTechnicians.length"
+          (click)="sendTechnicians()"
+        >Agregar {{vm.selectedTechnicians.length ? vm.selectedTechnicians.length > 1 ? vm.selectedTechnicians.length + ' técnicos' : vm.selectedTechnicians.length + ' técnico' : ''}} {{vm.selectedTechnicians.length ? vm.selectedTechnicians.length > 1 ? ' adicionales' : ' adicional' : ''}}</button>
+      </div>
     </ng-container>
   </div>
 </ng-container>

@@ -85,7 +85,10 @@ export interface SecuredData {
   ofscRestClientId: string;
   ofscRestSecretId: string;
   urlOFSC: string;
-  parametroComplejidad: number;
+  urlAWSTechnicians: string;
+  userAWS: string;
+  passAWS: string;
+  urlAWSToken: string;
 }
 
 export interface AllowedProcedures {

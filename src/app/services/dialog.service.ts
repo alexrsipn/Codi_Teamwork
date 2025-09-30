@@ -26,9 +26,13 @@ export class DialogService {
     return dialogRef.afterClosed();
   }
 
-  confirm(message: string): Observable<void> {
+  confirm(title: string, message: string): Observable<void> {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: message,
+      data: {
+        title: title,
+        message: message
+      },
+      disableClose: true
     });
     return dialogRef.afterClosed();
   }
@@ -89,9 +93,9 @@ export class SuccessDialogComponent {
     selector: 'app-confirm-dialog',
     imports: [MatIconModule, MatButtonModule, MatDialogModule],
     template: `
-    <h2 mat-dialog-title>Confirmar movimiento de recursos</h2>
+    <h2 mat-dialog-title>{{data.title}}</h2>
     <mat-dialog-content>
-      <p>{{data}}</p>
+      <p>{{data.message}}</p>
     </mat-dialog-content>
     <mat-dialog-actions style="display: flex; justify-content: space-around; align-items: center">
       <button style="width: 40%" mat-button mat-dialog-close [mat-dialog-close]="false">No</button>
@@ -100,6 +104,5 @@ export class SuccessDialogComponent {
   `
 })
 export class ConfirmDialogComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: Error) {
-  }
+  constructor(@Inject(MAT_DIALOG_DATA) public data: {title: string, message: string}) {}
 }

@@ -62,38 +62,67 @@ export class OfsMessageService {
     this.sendPostMessageData(message);
   }
 
-/*  close(additionalData: Partial<Message> = {}): void {
+  close(additionalData: Partial<Message> = {}): void {
     const message: Partial<Message> = {
       ...additionalData,
       apiVersion: OfsMessageService.API_VERSION,
       method: 'close'
     };
     this.sendPostMessageData(message);
-  }*/
+  }
 
-  close(activityId: number): void {
-    let today = new Date();
+  closeAndRedirect(activityId: number) {
     const message = {
       apiVersion: OfsMessageService.API_VERSION,
       method: 'close',
-      backScreen: 'activity_list',
+      backScreen: 'end_activity',
+      backActivityId: activityId,
       activity: {
         "aid": activityId,
-        "XA_ACTION_CODE_205": today
       }
     };
     this.sendPostMessageData(message);
   }
 
-  update(additionalData: Partial<Message> = {}): void {
+  async closeAndUpdate(activityId: number, flag: boolean, technicians_list: string) {
+    const message = {
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'close',
+      entity: "activity",
+      backScreen: 'end_activity',
+      backActivityId: activityId,
+      activity: {
+        "aid": activityId,
+        "XA_CODI_FLAG_TEC_ADI": flag ? 1 : 0,
+        "XA_CODI_TECN_ADIC": technicians_list
+      }
+    };
+    this.sendPostMessageData(message);
+  }
+
+  async update(activityId: number, requiredAdditionals: boolean, technicians_list: string) {
+    const message = {
+      apiVersion: OfsMessageService.API_VERSION,
+      method: 'update',
+      activity: {
+        "aid": activityId,
+        "XA_CODI_FLAG_TEC_ADI": 0,
+        /*"XA_CODI_TECN_ADIC": technicians_list*/
+      }
+    };
+    console.log(message);
+    this.sendPostMessageData(message);
+  }
+
+/*  update(additionalData: Partial<Message> = {}): void {
     const message: Partial<Message> = {
       ...additionalData,
       apiVersion: OfsMessageService.API_VERSION,
       method: 'update',
-      /*activity: { XA_CLIENTSIGN_RATING: additionalData.activity!.XA_CLIENTSIGN_RATING }*/
+      /!*activity: { XA_CLIENTSIGN_RATING: additionalData.activity!.XA_CLIENTSIGN_RATING }*!/
     };
     this.sendPostMessageData(message);
-  }
+  }*/
 /*  updateSignRating(clientSignRating: string): void {
     const message: Partial<Message> = {
       apiVersion: OfsMessageService.API_VERSION,
