@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import {catchError, concatMap, delay, EMPTY, filter, finalize, from, map, switchMap, tap, throwError} from 'rxjs';
+import {catchError, concatMap, delay, EMPTY, filter, from, map, switchMap, tap, throwError} from 'rxjs';
 import { OfsMessageService } from './services/ofs-message.service';
 import { Message } from './types/models/message';
 import { OfsRestApiService } from './services/ofs-rest-api.service';
@@ -11,11 +11,9 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { SurveyData } from "./types/plugin-types";
 import {
   GetAResourceResponse,
-  GetAResourceRoute,
-  GetAResourceRouteItem, GetChildResourcesResponse,
+  GetChildResourcesResponse,
   UpdateAnActivityBodyParams
 } from "./types/ofs-rest-api";
-import {SpinnerService} from "./services/spinner.service";
 import {tecnicosAdicionalesRequest} from "./types/aws";
 
 interface State {
@@ -70,8 +68,7 @@ export class Store extends ComponentStore<State> {
     private readonly ofs: OfsMessageService,
     private readonly ofsRestApiService: OfsRestApiService,
     private readonly imageAnalyzer: ImageAnalyzerService,
-    private readonly dialog: DialogService,
-    private readonly spinner: SpinnerService
+    private readonly dialog: DialogService
   ) {
     super(initialState);
     this.handleOpenMessage(this.ofs.openMessage$);
@@ -97,27 +94,6 @@ export class Store extends ComponentStore<State> {
       provisioningValidation: message.activity.XA_PROVISIONING_VALIDATION,
       byPassClientSignature: message.activity.XA_CLIENTSIGN_OVER === '1' ? 1 : 0,
       resourceId: message.resource.external_id
-    };
-  });
-  readonly setFromOfsApi = this.updater((state, response: GetAResourceRouteItem[]) => {
-    return {
-      ...state,
-      activityId: response[0].activityId,
-      accountType: response[0].XA_ACCOUNTTYPE,
-      jobType: response[0].XA_JOBTYPE,
-      magicTownFlag: response[0].XA_MAGIC_TOWN_FLAG,
-      masterFlag: response[0].XA_MST_ACT,
-      qualityJob: response[0].XA_QUALITY_JOB,
-      apptNumber: response[0].apptNumber,
-      aworkType: response[0].activityType,
-      provisioningValidation: response[0].XA_PROVISIONING_VALIDATION,
-      byPassClientSignature: response[0].XA_CLIENTSIGN_OVER === 1 ? 1 : 0
-    }
-  });
-  readonly setIsLoading = this.updater<boolean>((state, isLoading) => {
-    return {
-      ...state,
-      isLoading,
     };
   });
   readonly setRequiredAdditionals = this.updater<boolean>((state, requiredAdditionals) => {
@@ -149,16 +125,6 @@ export class Store extends ComponentStore<State> {
       ...state,
       clientSignature,
     }));
-/*  readonly setTechnicianSignature = this.updater<Blob>(
-    (state, technicianSignature) => ({
-      ...state,
-      technicianSignature,
-    }));*/
-/*  readonly setTechnicianSignatureHandled = this.updater<Image>(
-    (state, technicianSignatureHandled) => ({
-      ...state,
-      technicianSignatureHandled,
-    }));*/
   readonly setClientSignatureHandled = this.updater<Image>(
     (state, clientSignatureHandled) => ({
       ...state,
@@ -169,36 +135,14 @@ export class Store extends ComponentStore<State> {
       ...state,
       clientSignatureResult,
     }));
-/*  readonly setTechnicianSignatureResult = this.updater<{text: string, result: boolean, quality: number}>(
-    (state, technicianSignatureResult) => ({
-      ...state,
-      technicianSignatureResult,
-    }));*/
   readonly setComplexity = this.updater((state, complexity: number) => ({
     ...state,
     complexity
-  }));
-  readonly setTcSectionVisibilitySettings = this.updater((state, tcSectionVisibilitySettings: boolean) => ({
-    ...state,
-    tcSectionVisibilitySettings
-  }));
-  readonly setClientSignVisibilitySettings = this.updater((state, clientSignVisibilitySettings: boolean) => ({
-    ...state,
-    clientSignVisibilitySettings
-  }));
-  readonly setOthersVisibilitySettings = this.updater((state, othersVisibilitySettings: boolean) => ({
-    ...state,
-    othersVisibilitySettings
-  }));
-  readonly setonlyFinishButtonVisibility = this.updater((state, onlyFinishButtonVisibility: boolean) => ({
-    ...state,
-    onlyFinishButtonVisibility
   }));
 
   // Effects
   readonly handleOpenMessage = this.effect<Message>(($) =>
     $.pipe(
-      /*tap(() => this.spinner.show()),*/
       tap(({securedData}) => {
         const {ofscRestClientId, ofscRestSecretId, urlOFSC, urlAWSTechnicians, userAWS, passAWS, urlAWSToken} = securedData;
         this.ofsRestApiService.setOfsUrl(urlOFSC);
@@ -219,16 +163,11 @@ export class Store extends ComponentStore<State> {
         this.setRequiredAdditionals(userConfirmed!);
       }),
       filter((userConfirmed) => !!userConfirmed!),
-/*      tap({
-        complete: () => this.spinner.hide()
-      }),*/
-      /*finalize(() => this.spinner.hide())*/
     )
   );
   readonly sendTechnicians = this.effect($ => $.pipe(
     concatMap(() => this.dialog.confirm("Confirmar técnicos adicionales", `¿Estás seguro de agregar ${this.get().selectedTechnicians.length} técnicos adicionales?`)),
     concatMap((result) => result! ? Promise.resolve() : EMPTY),
-    /*tap(() => this.spinner.show()),*/
     switchMap(() => this.ofsRestApiService.getAwsToken()),
     tap((response) => response.status === 200 && this.ofsRestApiService.setAwsToken(response.token)),
     map(() => this.handleTechniciansToSend()),
@@ -242,7 +181,6 @@ export class Store extends ComponentStore<State> {
       XA_CODI_TEC_ADI: technicians
     })),
     tap(() => this.ofs.closeAndRedirect(Number(this.get().activityId!))),
-    /*finalize(() => this.spinner.hide())*/
   ));
   readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(
     tap(() => this.setClientSignatureResult(undefined)),
@@ -257,18 +195,6 @@ export class Store extends ComponentStore<State> {
       return Promise.resolve(complexity);
     }),
   ));
-/*  readonly processDrawnTechSignature = this.effect<Blob>((blob$) => blob$.pipe(
-    tap((blob) => this.setTechnicianSignature(blob)),
-    switchMap((blob: Blob) => from(this.imageAnalyzer.getBinaryImage(blob))),
-    tap((image: Image) => this.setTechnicianSignatureHandled(image)),
-    concatMap((image) => {
-      const pixels = this.imageAnalyzer.extractPixels(image);
-      const graph = this.imageAnalyzer.buildGraph(pixels);
-      const complexity = this.imageAnalyzer.analyzeGraph(graph);
-      this.setTechnicianSignatureResult(complexity);
-      return Promise.resolve(complexity);
-    }),
-  ));*/
   readonly submitDrawnSignatures = this.effect((blob$) => blob$.pipe(
     concatMap(() => {
       const {clientSignatureHandled, clientSignatureResult, activityId} = this.get();
@@ -301,16 +227,19 @@ export class Store extends ComponentStore<State> {
 
   readonly completeActivity = this.effect<SurveyData>($ => $.pipe(
     map((survey: SurveyData) => this.handleSurvey(survey)),
-    /*tap(survey => console.log(Object.keys(survey).length)),*/
     concatMap((params) => Object.keys(params).length > 0 ? from(this.ofsRestApiService.updateAnActivity(Number(this.get().activityId), params)) : Promise.resolve()),
     delay(300),
     switchMap(() => this.ofsRestApiService.completeAnActivity(Number(this.get().activityId))),
-    /*tap(() => this.ofs.closeAndUpdate(Number(this.get().activityId)))*/
   ));
 
   private handleChildResources(parentResourceData: GetChildResourcesResponse) {
     const {resourceId} = this.get();
-    const resources = parentResourceData.items.filter(resource => resource.resourceId !== resourceId && resource.resourceType === 'TEC');
+    const resources = parentResourceData.items.filter(resource =>
+      resource.resourceId !== resourceId
+      && resource.resourceType === 'TEC'
+      && resource.status === "active"
+      && resource.workSchedules.items &&
+      resource.workSchedules.items.some(workSchedule => workSchedule.isWorking));
     this.setChildResources(resources);
   }
 
@@ -343,34 +272,6 @@ export class Store extends ComponentStore<State> {
       params.XA_OTHER_COMMENTS = rawSurvey.othersCtrl;
     }
     return params;
-  }
-
-  private visibilitySettings(aworkTypeGroup: string) {
-    const {magicTownFlag, accountType, jobType, provisioningValidation, solutionCode} = this.get();
-    /*let jobTypeCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];*/
-    /*let jobTypeOthersCatalog = ['TC061','TC062','TC063','TC072','TC108','TC126','TC179','TC180','TC181','TC182','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216','TC224'];*/
-    /*let jobTypeInternalCatalog = ['TC061','TC072','TC062','TC063','TC108','TC126','TC131','TC032','TC034','TC052','TC071','TC098','TC116','TC151','TC132','TC157','TC163','TC169', 'TC213','TC214','TC215','TC216'];*/
-    const jobTypeExceptionsCatalog = ['TC032','TC034','TC052','TC061','TC062','TC063','TC071','TC072','TC098','TC108','TC116','TC126','TC132','TC151','TC157','TC163','TC169','TC179','TC180','TC181','TC182','TC213','TC214','TC215','TC216','TC217','TC218','TC219','TC220'];
-
-    let aworkTypeGroupTCValidation = aworkTypeGroup.includes('GTC'); // activity.`aworktype_group` IN ('GTC')
-    let magicTownTCValidation = magicTownFlag?.toString() !== '1'; // NOT activity.`XA_MAGIC_TOWN_FLAG` IN ('1')
-    let accountTypeValidation = accountType ? accountType === 'Residencial' : true; // activity.`XA_ACCOUNTTYPE` IN ('Residencial')
-    let tcSectionValidation = aworkTypeGroupTCValidation && magicTownTCValidation && accountTypeValidation;
-    this.setTcSectionVisibilitySettings(tcSectionValidation);
-    let jobTypeSignValidation = jobTypeExceptionsCatalog.includes(jobType!);
-    let aworkTypeSignValidation = aworkTypeGroup.includes('customer') || aworkTypeGroup.includes('GTC');
-    let clientSignatureVisibilitySettings = !jobTypeSignValidation && aworkTypeSignValidation;
-    this.setClientSignVisibilitySettings(clientSignatureVisibilitySettings);
-    let aworkTypeOthersValidation = aworkTypeGroup.includes('customer');
-    let jobTypeOthersValidation = jobTypeExceptionsCatalog.includes(jobType!);
-    let magicTownOthersValidation = magicTownFlag?.toString() !== '1';
-    let accountTypeOthersValidation = accountType === 'Residencial' || !accountType;
-    let othersVisibilitySettings = aworkTypeOthersValidation && !jobTypeOthersValidation && magicTownOthersValidation && accountTypeOthersValidation;
-    this.setOthersVisibilitySettings(othersVisibilitySettings);
-    let jobTypeStepperValidation = jobTypeExceptionsCatalog.includes(jobType!);
-    let provisioningVal = provisioningValidation === 'OK';
-    let onlyFinishVisibilitySetting = jobTypeStepperValidation && provisioningVal;
-    this.setonlyFinishButtonVisibility(onlyFinishVisibilitySetting);
   }
 
   public sendCloseMessage(additionalData: Partial<Message>) {

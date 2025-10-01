@@ -68,7 +68,7 @@ export class OfsRestApiService {
   }
 
   getChildResources(resourceId: string) {
-    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/resources/${resourceId}/children?fields=resourceId,status,name,resourceType`;
+    const endpoint = `${this.baseUrl}/rest/ofscCore/v1/resources/${resourceId}/children?fields=resourceId,status,name,resourceType&expand=workSchedules`;
     const headers = new HttpHeaders({
       Authorization: 'Basic ' + btoa(`${this.credentials.user}:${this.credentials.pass}`),
       'Content-Type': 'application/json',

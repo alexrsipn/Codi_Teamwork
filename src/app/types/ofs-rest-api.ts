@@ -9,7 +9,7 @@ export interface GetAResourceResponse {
   users: any,
   workZones: any,
   workSkills: any,
-  workSchedules: any,
+  workSchedules: ChildResourceWorkSchedule,
   links: any[]
 }
 
@@ -19,6 +19,24 @@ export interface GetChildResourcesResponse {
   links: any[],
   offset: number,
   totalResults: number
+}
+
+interface ChildResourceWorkSchedule {
+  items?: ChildResourceWorkScheduleItem[];
+  links?: any[];
+}
+
+interface ChildResourceWorkScheduleItem {
+  recordType: string;
+  startDate: string;
+  endDate: string;
+  shiftLabel: string;
+  shiftType: string;
+  isWorking: boolean;
+  recurrence: any;
+  scheduleItemId: number;
+  workTimeEnd: string;
+  workTimeStart: string;
 }
 
 export interface GetAnActivityTypeResponse {

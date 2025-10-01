@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Pgn-Izzi-SignatureComplexity": {
+    "Pgn-Izzi-CodiTeamwork": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/pgn-izzi-signature-complexity",
+            "outputPath": "dist/pgn-izzi-codi-teamwork",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -63,10 +63,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Pgn-Izzi-SignatureComplexity:build:production"
+              "buildTarget": "Pgn-Izzi-CodiTeamwork:build:production"
             },
             "development": {
-              "buildTarget": "Pgn-Izzi-SignatureComplexity:build:development"
+              "buildTarget": "Pgn-Izzi-CodiTeamwork:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -74,7 +74,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "Pgn-Izzi-SignatureComplexity:build"
+            "buildTarget": "Pgn-Izzi-CodiTeamwork:build"
           }
         },
         "test": {
