@@ -93,7 +93,8 @@ export class Store extends ComponentStore<State> {
       solutionCode: message.activity.XA_SOLUTIONCODE,
       provisioningValidation: message.activity.XA_PROVISIONING_VALIDATION,
       byPassClientSignature: message.activity.XA_CLIENTSIGN_OVER === '1' ? 1 : 0,
-      resourceId: message.resource.external_id
+      resourceId: message.resource.external_id,
+      requiredAdditionalsFlag: message.activity.XA_CODI_FLAG_TEC_ADI === '1',
     };
   });
   readonly setRequiredAdditionals = this.updater<boolean>((state, requiredAdditionals) => {
@@ -151,6 +152,13 @@ export class Store extends ComponentStore<State> {
         this.ofsRestApiService.setAwsUrlTechnicians(urlAWSTechnicians);
       }),
       tap((message) => this.setFromOfsMessage(message)),
+      switchMap((message)=> {
+        if(message.activity.XA_CODI_FLAG_TEC_ADI === '1'){
+          this.ofs.closeAndRedirect(message.activity.aid);
+          return EMPTY;
+        }
+        return Promise.resolve();
+      }),
       switchMap(() => this.ofsRestApiService.getAResource(this.get().resourceId!)),
       tap(resource => this.setResourceChild(resource)),
       switchMap((resourcesChild) => this.ofsRestApiService.getChildResources(resourcesChild.parentResourceId)),

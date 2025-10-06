@@ -32,6 +32,7 @@ export interface Activity {
   aworktype: string,
   aid: number,
   XA_SOLUTIONCODE?: string,
+  XA_CODI_FLAG_TEC_ADI?: string,
 }
 
 export interface Format {
