@@ -37,7 +37,7 @@
           class="bg-sky-600 text-white px-4 py-2 rounded hover:bg-sky-700 font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
           [disabled]="!vm.selectedTechnicians.length"
           (click)="sendTechnicians()"
-        >Agregar {{vm.selectedTechnicians.length ? vm.selectedTechnicians.length > 1 ? vm.selectedTechnicians.length + ' técnicos' : vm.selectedTechnicians.length + ' técnico' : ''}} {{vm.selectedTechnicians.length ? vm.selectedTechnicians.length > 1 ? ' adicionales' : ' adicional' : ''}}</button>
+        >Confirmar {{vm.selectedTechnicians.length ? vm.selectedTechnicians.length > 1 ? vm.selectedTechnicians.length + ' técnicos' : vm.selectedTechnicians.length + ' técnico' : ''}} {{vm.selectedTechnicians.length ? vm.selectedTechnicians.length > 1 ? ' adicionales' : ' adicional' : ''}}</button>
       </div>
     </ng-container>
   </div>

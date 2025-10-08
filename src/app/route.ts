@@ -1,5 +1,4 @@
 import { Route } from '@angular/router';
-import { CompleteComponent } from './components/complete/complete.component';
 import {TeamworkComponent} from "./components/teamwork/teamwork.component";
 
 export const ROUTES: Route[] = [

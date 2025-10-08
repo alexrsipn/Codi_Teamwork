@@ -1,3 +1,4 @@
+<!--
 <ng-container *ngIf="vm$ | async as vm">
   <div>
     <h3 style="text-align: center; padding: 0.5rem 0">Orden de trabajo: <b>{{vm.apptNumber}}</b></h3>
@@ -5,7 +6,7 @@
       <mat-stepper [orientation]="(stepperOrientation | async)!" [linear]="true">
         <mat-step *ngIf="vm.clientSignVisibilitySettings" [stepControl]="firstFormGroup" label="Firma">
           <div>
-            <!--<app-canvas [techResult]="vm.technicianSignatureResult" [clientResult]="vm.clientSignatureResult?.text"></app-canvas>-->
+            &lt;!&ndash;<app-canvas [techResult]="vm.technicianSignatureResult" [clientResult]="vm.clientSignatureResult?.text"></app-canvas>&ndash;&gt;
             <app-canvas [clientResult]="vm.clientSignatureResult?.text"></app-canvas>
           </div>
           <div style="display: flex; justify-content: space-around; align-items: center; width: 100%; padding: 1rem 0" class="center">
@@ -25,7 +26,7 @@
                 <mat-select formControlName="serviceConformityCtrl">
                   <mat-option value="Fallido_cerrado">Fallido Cerrado</mat-option>
                   <mat-option value="OKCliente_cerrado">OK Cliente Cerrado</mat-option>
-                  <!--<mat-option value="PorTiempo">Por Tiempo</mat-option>-->
+                  &lt;!&ndash;<mat-option value="PorTiempo">Por Tiempo</mat-option>&ndash;&gt;
                 </mat-select>
               </mat-form-field>
               <mat-error *ngIf="serviceConformityCtrlHasError && secondFormGroup.get('serviceConformityCtrl')?.touched">
@@ -74,3 +75,4 @@
     </ng-template>
   </div>
 </ng-container>
+-->

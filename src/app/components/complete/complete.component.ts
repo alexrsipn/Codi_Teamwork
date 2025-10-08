@@ -1,3 +1,4 @@
+/*
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -89,7 +90,7 @@ export class CompleteComponent implements OnInit, OnDestroy{
       // Others
       const otherCtrl = this.secondFormGroup.get('othersCtrl');
       if (vm.othersVisibilitySettings) {
-        /*otherCtrl?.setValidators(Validators.required);*/
+        /!*otherCtrl?.setValidators(Validators.required);*!/
         otherCtrl?.clearValidators();
       } else {
         otherCtrl?.clearValidators();
@@ -123,7 +124,7 @@ export class CompleteComponent implements OnInit, OnDestroy{
   async processDrawnSignatures() {
     if (this.canvasComponent) {
       const clientSignBlob = await this.canvasComponent.getClientSignAsBlob();
-      /*const techSignBlob = await this.canvasComponent.getTechSignAsBlob();*/
+      /!*const techSignBlob = await this.canvasComponent.getTechSignAsBlob();*!/
 
       if (clientSignBlob) {
         this.store.processDrawnClientSignature(clientSignBlob);
@@ -143,7 +144,7 @@ export class CompleteComponent implements OnInit, OnDestroy{
               this.stepper.next();
             }
           } else {
-            /*console.log("La firma del cliente no es válida, no se avanzará en el flujo.");*/
+            /!*console.log("La firma del cliente no es válida, no se avanzará en el flujo.");*!/
             if (this.firstFormGroup.get('firstCtrl')) {
               this.firstFormGroup.get('firstCtrl')!.setValue('');
               this.firstFormGroup.get('firstCtrl')!.markAsTouched();
@@ -151,8 +152,8 @@ export class CompleteComponent implements OnInit, OnDestroy{
           }
         })
       }
-      /*if (techSignBlob) this.store.processDrawnTechSignature(techSignBlob);*/
-      /*this.store.showValidationResults();*/
+      /!*if (techSignBlob) this.store.processDrawnTechSignature(techSignBlob);*!/
+      /!*this.store.showValidationResults();*!/
     } else {
       console.log("CanvasComponent no está disponible.");
     }
@@ -162,7 +163,7 @@ export class CompleteComponent implements OnInit, OnDestroy{
   clearSignatures() {
     if (this.canvasComponent) {
       this.canvasComponent.clearClientCanvas();
-      /*this.canvasComponent.clearTechCanvas();*/
+      /!*this.canvasComponent.clearTechCanvas();*!/
       this.store.patchState({
         clientSignature: null,
         clientSignatureHandled: null,
@@ -191,11 +192,11 @@ export class CompleteComponent implements OnInit, OnDestroy{
 
   // Getters
   get canValidateSignatures(): boolean {
-    /*return !!(this.canvasComponent?.clientHasContent && this.canvasComponent?.techHasContent);*/
+    /!*return !!(this.canvasComponent?.clientHasContent && this.canvasComponent?.techHasContent);*!/
     return !!(this.canvasComponent?.clientHasContent);
   }
   get canClearSignatures(): boolean {
-    /*return !!(this.canvasComponent?.clientHasContent || this.canvasComponent?.techHasContent);*/
+    /!*return !!(this.canvasComponent?.clientHasContent || this.canvasComponent?.techHasContent);*!/
     return !!(this.canvasComponent?.clientHasContent);
   }
   get serviceConformityCtrlHasError() {
@@ -211,3 +212,4 @@ export class CompleteComponent implements OnInit, OnDestroy{
     return this.secondFormGroup.get('othersCtrl')?.hasError('required');
   }
 }
+*/

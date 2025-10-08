@@ -67,7 +67,7 @@ export class Store extends ComponentStore<State> {
   constructor(
     private readonly ofs: OfsMessageService,
     private readonly ofsRestApiService: OfsRestApiService,
-    private readonly imageAnalyzer: ImageAnalyzerService,
+    /*private readonly imageAnalyzer: ImageAnalyzerService,*/
     private readonly dialog: DialogService
   ) {
     super(initialState);
@@ -121,7 +121,7 @@ export class Store extends ComponentStore<State> {
       selectedTechnicians
     }
   })
-  readonly setClientSignature = this.updater<Blob>(
+/*  readonly setClientSignature = this.updater<Blob>(
     (state, clientSignature) => ({
       ...state,
       clientSignature,
@@ -139,7 +139,7 @@ export class Store extends ComponentStore<State> {
   readonly setComplexity = this.updater((state, complexity: number) => ({
     ...state,
     complexity
-  }));
+  }));*/
 
   // Effects
   readonly handleOpenMessage = this.effect<Message>(($) =>
@@ -152,13 +152,20 @@ export class Store extends ComponentStore<State> {
         this.ofsRestApiService.setAwsUrlTechnicians(urlAWSTechnicians);
       }),
       tap((message) => this.setFromOfsMessage(message)),
-      switchMap((message)=> {
+      filter((message) => {
+        const alreadyProcessed = message.activity.XA_CODI_FLAG_TEC_ADI === '1';
+        if (alreadyProcessed) {
+          this.ofs.closeAndRedirect(Number(message.activity.aid));
+        }
+        return !alreadyProcessed;
+      }),
+/*      switchMap((message)=> {
         if(message.activity.XA_CODI_FLAG_TEC_ADI === '1'){
           this.ofs.closeAndRedirect(message.activity.aid);
           return EMPTY;
         }
         return Promise.resolve();
-      }),
+      }),*/
       switchMap(() => this.ofsRestApiService.getAResource(this.get().resourceId!)),
       tap(resource => this.setResourceChild(resource)),
       switchMap((resourcesChild) => this.ofsRestApiService.getChildResources(resourcesChild.parentResourceId)),
@@ -174,12 +181,13 @@ export class Store extends ComponentStore<State> {
     )
   );
   readonly sendTechnicians = this.effect($ => $.pipe(
-    concatMap(() => this.dialog.confirm("Confirmar técnicos adicionales", `¿Estás seguro de agregar ${this.get().selectedTechnicians.length} técnicos adicionales?`)),
+    concatMap(() => this.dialog.confirm("Confirmar técnicos adicionales", `¿Estás seguro de confirmar ${this.get().selectedTechnicians.length} ${this.get().selectedTechnicians.length > 1 ? 'técnicos adicionales' : 'técnico adicional'} en la incidencia?`)),
     concatMap((result) => result! ? Promise.resolve() : EMPTY),
     switchMap(() => this.ofsRestApiService.getAwsToken()),
-    tap((response) => response.status === 200 && this.ofsRestApiService.setAwsToken(response.token)),
+    tap((response) => response.status === 200 ? this.ofsRestApiService.setAwsToken(response.token) : this.dialog.error("Ocurrió un error al obtener el token")),
     map(() => this.handleTechniciansToSend()),
     concatMap((bodyParams) => this.ofsRestApiService.incidentSendAdditionalTech(bodyParams)),
+    tap((response) => Number(response.status) === 200 ? this.dialog.success("Técnicos adicionales enviados correctamente") : this.dialog.error("Ocurrió un error al enviar los técnicos adicionales")),
     map(() => {
       const {selectedTechnicians} = this.get();
       return selectedTechnicians.map(technician => technician.name).join('\n');
@@ -190,7 +198,7 @@ export class Store extends ComponentStore<State> {
     })),
     tap(() => this.ofs.closeAndRedirect(Number(this.get().activityId!))),
   ));
-  readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(
+/*  readonly processDrawnClientSignature = this.effect<Blob>((blob$) => blob$.pipe(
     tap(() => this.setClientSignatureResult(undefined)),
     tap((blob) => this.setClientSignature(blob)),
     switchMap((blob: Blob) => from(this.imageAnalyzer.getBinaryImage(blob))),
@@ -202,8 +210,8 @@ export class Store extends ComponentStore<State> {
       this.setClientSignatureResult(complexity);
       return Promise.resolve(complexity);
     }),
-  ));
-  readonly submitDrawnSignatures = this.effect((blob$) => blob$.pipe(
+  ));*/
+  /*readonly submitDrawnSignatures = this.effect((blob$) => blob$.pipe(
     concatMap(() => {
       const {clientSignatureHandled, clientSignatureResult, activityId} = this.get();
       if (!clientSignatureResult!.result) {
@@ -231,14 +239,14 @@ export class Store extends ComponentStore<State> {
       console.log('Error en el proceso de envío de firmas', error);
       return EMPTY;
     }),
-  ));
+  ));*/
 
-  readonly completeActivity = this.effect<SurveyData>($ => $.pipe(
+/*  readonly completeActivity = this.effect<SurveyData>($ => $.pipe(
     map((survey: SurveyData) => this.handleSurvey(survey)),
     concatMap((params) => Object.keys(params).length > 0 ? from(this.ofsRestApiService.updateAnActivity(Number(this.get().activityId), params)) : Promise.resolve()),
     delay(300),
     switchMap(() => this.ofsRestApiService.completeAnActivity(Number(this.get().activityId))),
-  ));
+  ));*/
 
   private handleChildResources(parentResourceData: GetChildResourcesResponse) {
     const {resourceId} = this.get();
@@ -265,7 +273,7 @@ export class Store extends ComponentStore<State> {
     };
   }
 
-  private handleSurvey(rawSurvey: SurveyData): UpdateAnActivityBodyParams {
+/*  private handleSurvey(rawSurvey: SurveyData): UpdateAnActivityBodyParams {
     const params: Partial<UpdateAnActivityBodyParams> = {}
     if (rawSurvey.serviceConformityCtrl) {
       params.XA_STATUS_ORDER_SIEBEL = rawSurvey.serviceConformityCtrl
@@ -280,7 +288,7 @@ export class Store extends ComponentStore<State> {
       params.XA_OTHER_COMMENTS = rawSurvey.othersCtrl;
     }
     return params;
-  }
+  }*/
 
   public sendCloseMessage(additionalData: Partial<Message>) {
     this.ofs.close(additionalData);
