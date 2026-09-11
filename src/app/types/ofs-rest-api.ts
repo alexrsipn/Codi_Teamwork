@@ -37,6 +37,20 @@ interface ChildResourceWorkScheduleItem {
   scheduleItemId: number;
   workTimeEnd: string;
   workTimeStart: string;
+  scheduleShifts: scheduleShifts[];
+}
+
+interface scheduleShifts {
+  recordType: string;
+  startDate: string;
+  endDate: string;
+  scheduleLabel: string;
+  shiftType: string;
+  workTimeStart: string;
+  workTimeEnd: string;
+  points: number;
+  isWorking: boolean;
+  recurrence: any;
 }
 
 export interface GetAnActivityTypeResponse {

@@ -184,10 +184,23 @@ export class Store extends ComponentStore<State> {
     concatMap(() => this.dialog.confirm("Confirmar técnicos adicionales", `¿Estás seguro de confirmar ${this.get().selectedTechnicians.length} ${this.get().selectedTechnicians.length > 1 ? 'técnicos adicionales' : 'técnico adicional'} en la incidencia?`)),
     concatMap((result) => result! ? Promise.resolve() : EMPTY),
     switchMap(() => this.ofsRestApiService.getAwsToken()),
-    tap((response) => response.status === 200 ? this.ofsRestApiService.setAwsToken(response.token) : this.dialog.error("Ocurrió un error al obtener el token")),
+    filter((responseToken) => {
+      const status = responseToken.status === 200
+      if (!status) {
+        this.dialog.error("Ocurrió un error al obtener el token, intentar nuevamente en unos minutos.");
+      }
+      this.ofsRestApiService.setAwsToken(responseToken.token);
+      return status;
+    }),
     map(() => this.handleTechniciansToSend()),
-    concatMap((bodyParams) => this.ofsRestApiService.incidentSendAdditionalTech(bodyParams)),
-    tap((response) => Number(response.status) === 200 ? this.dialog.success("Técnicos adicionales enviados correctamente") : this.dialog.error("Ocurrió un error al enviar los técnicos adicionales")),
+    switchMap((bodyParams) => this.ofsRestApiService.incidentSendAdditionalTech(bodyParams)),
+    filter((responseAdditionalTech) => {
+      const status = Number(responseAdditionalTech.status) === 200;
+      if (!status) {
+        this.dialog.error("Ocurrió un error al enviar los técnicos adicionales, intentar nuevamente en unos minutos.");
+      }
+      return status;
+    }),
     map(() => {
       const {selectedTechnicians} = this.get();
       return selectedTechnicians.map(technician => technician.name).join('\n');
@@ -250,12 +263,13 @@ export class Store extends ComponentStore<State> {
 
   private handleChildResources(parentResourceData: GetChildResourcesResponse) {
     const {resourceId} = this.get();
+    /*resource.workSchedules.items.some(workSchedule => workSchedule.isWorking));*/
     const resources = parentResourceData.items.filter(resource =>
       resource.resourceId !== resourceId
       && resource.resourceType === 'TEC'
       && resource.status === "active"
       && resource.workSchedules.items &&
-      resource.workSchedules.items.some(workSchedule => workSchedule.isWorking));
+      resource.workSchedules.items.some(workSchedule => workSchedule.isWorking || (workSchedule.scheduleShifts && workSchedule.scheduleShifts.some(shift => shift.isWorking))));
     this.setChildResources(resources);
   }
 
